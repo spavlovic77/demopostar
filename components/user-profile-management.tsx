@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Lock, CheckCircle, AlertCircle, Key, Shield, Loader2, Save, RefreshCw, UserPlus } from "lucide-react"
+import { Lock, CheckCircle, AlertCircle, Key, Shield, Loader2, Save, RefreshCw, UserPlus, Trash2 } from "lucide-react"
 import { AuthService, type UserData } from "@/lib/auth"
 import {
   Dialog,
@@ -37,7 +37,7 @@ interface PeppolIdentifier {
 interface OrganizationUser {
   id: number
   email: string
-  email_verified: string
+  email_verified: boolean
 }
 
 interface OrganizationDetails {
@@ -92,6 +92,8 @@ export function UserProfileManagement() {
   const [newUserEmail, setNewUserEmail] = useState<{ [key: number]: string }>({})
   const [detailedOrganizations, setDetailedOrganizations] = useState<OrganizationDetails[]>([])
   const [loadingOrganizations, setLoadingOrganizations] = useState(false)
+  const [organizationUsers, setOrganizationUsers] = useState<{ [key: number]: OrganizationUser[] }>({})
+  const [loadingUsers, setLoadingUsers] = useState<{ [key: number]: boolean }>({})
 
   useEffect(() => {
     loadUserProfile()
@@ -196,6 +198,8 @@ export function UserProfileManagement() {
             const orgDetails = await response.json()
             detailedOrgs.push(orgDetails)
             console.log("[v0] Loaded details for:", orgName, orgDetails)
+
+            await loadOrganizationUsers(orgDetails.id)
           } else {
             console.log("[v0] Failed to load details for:", orgName)
           }
@@ -210,6 +214,30 @@ export function UserProfileManagement() {
       console.log("[v0] Error loading detailed organizations:", err)
     } finally {
       setLoadingOrganizations(false)
+    }
+  }
+
+  const loadOrganizationUsers = async (orgId: number) => {
+    setLoadingUsers((prev) => ({ ...prev, [orgId]: true }))
+    console.log("[v0] Loading users for organization:", orgId)
+
+    try {
+      const response = await fetch(`/api/organizations/${orgId}/users`)
+
+      if (response.ok) {
+        const data = await response.json()
+        const users = data.results || []
+        setOrganizationUsers((prev) => ({ ...prev, [orgId]: users }))
+        console.log("[v0] Users loaded for org", orgId, ":", users)
+      } else {
+        console.log("[v0] Failed to load users for org:", orgId)
+        setOrganizationUsers((prev) => ({ ...prev, [orgId]: [] }))
+      }
+    } catch (err) {
+      console.log("[v0] Error loading users for org:", orgId, err)
+      setOrganizationUsers((prev) => ({ ...prev, [orgId]: [] }))
+    } finally {
+      setLoadingUsers((prev) => ({ ...prev, [orgId]: false }))
     }
   }
 
@@ -348,8 +376,45 @@ export function UserProfileManagement() {
       setSuccess("User added successfully")
       setAddUserDialogOpen({ ...addUserDialogOpen, [orgId]: false })
       setNewUserEmail({ ...newUserEmail, [orgId]: "" })
+
+      await loadOrganizationUsers(orgId)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to add user")
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  const handleRemoveUser = async (orgId: number, userId: number, userEmail: string) => {
+    if (!confirm(`Naozaj chcete odstrániť používateľa ${userEmail} z organizácie?`)) {
+      return
+    }
+
+    setIsUpdating(true)
+    setError("")
+    setSuccess("")
+
+    try {
+      const tokens = AuthService.getTokens()
+      if (!tokens) throw new Error("Authentication required")
+
+      const response = await fetch(`/api/organizations/${orgId}/users/${userId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${tokens.access}`,
+        },
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to remove user")
+      }
+
+      setSuccess("User removed successfully")
+
+      await loadOrganizationUsers(orgId)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to remove user")
     } finally {
       setIsUpdating(false)
     }
@@ -494,10 +559,7 @@ export function UserProfileManagement() {
                             <div className="space-y-2">
                               {org.identifiers.map((identifier) => {
                                 const parseIdentifier = (fullIdentifier: string) => {
-                                  // Remove scheme prefix (e.g., "iso6523-actorid-upis:") and return only the value part
                                   const parts = fullIdentifier.split(":")
-                                  // If format is "scheme:value1:value2", return "value1:value2"
-                                  // If format is "scheme:value", return "value"
                                   return parts.length > 1 ? parts.slice(1).join(":") : fullIdentifier
                                 }
 
@@ -512,6 +574,41 @@ export function UserProfileManagement() {
                             </div>
                           </div>
                         )}
+
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground mb-2">Používatelia</p>
+                          {loadingUsers[org.id] ? (
+                            <div className="text-center py-4">
+                              <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
+                            </div>
+                          ) : organizationUsers[org.id] && organizationUsers[org.id].length > 0 ? (
+                            <div className="space-y-2">
+                              {organizationUsers[org.id].map((user) => (
+                                <div
+                                  key={user.id}
+                                  className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-sm text-foreground">{user.email}</p>
+                                    {user.email_verified && (
+                                      <CheckCircle className="h-4 w-4 text-green-600" title="Email verified" />
+                                    )}
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleRemoveUser(org.id, user.id, user.email)}
+                                    disabled={isUpdating}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-muted-foreground italic">Žiadni používatelia</p>
+                          )}
+                        </div>
                       </div>
                     </Card>
                   ))}
