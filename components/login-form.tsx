@@ -93,7 +93,7 @@ export function LoginForm() {
         }
       }
 
-      router.push("/dashboard")
+      router.push("/dashboard") // Redirect to dashboard, the dashboard-layout will handle setting activeSection to "send" by default
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed")
       setIsLoading(false) // Reset loading state on error

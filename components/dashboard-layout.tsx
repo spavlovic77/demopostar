@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarInitials } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -63,12 +63,6 @@ export function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [foldersExpanded, setFoldersExpanded] = useState(true)
 
-  useEffect(() => {
-    if (userData) {
-      setActiveSection("wallet")
-    }
-  }, [userData])
-
   const handleLogout = () => {
     AuthService.logout()
   }
@@ -122,7 +116,7 @@ export function DashboardLayout() {
   if (isLoading || !userData) {
     return (
       <div className="min-h-screen bg-background flex">
-        <div className="fixed inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-sidebar-border">
+        <div className="hidden lg:block fixed inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-sidebar-border">
           <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
@@ -149,7 +143,27 @@ export function DashboardLayout() {
           </div>
         </div>
 
-        <div className="flex-1 ml-64">
+        <div className="lg:hidden w-full">
+          <div className="flex items-center justify-between p-4 border-b border-border bg-card">
+            <Skeleton className="h-8 w-8 rounded" />
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-8 w-8 rounded" />
+          </div>
+
+          <main className="p-4">
+            <div className="space-y-4">
+              <Skeleton className="h-8 w-48" />
+              <div className="space-y-3">
+                <Skeleton className="h-24 w-full rounded-lg" />
+                <Skeleton className="h-24 w-full rounded-lg" />
+                <Skeleton className="h-24 w-full rounded-lg" />
+              </div>
+              <Skeleton className="h-64 w-full rounded-lg" />
+            </div>
+          </main>
+        </div>
+
+        <div className="hidden lg:block flex-1 ml-64">
           <main className="p-6">
             <div className="space-y-6">
               <Skeleton className="h-10 w-64" />

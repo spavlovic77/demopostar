@@ -1,14 +1,10 @@
-# Efabox Prepaid - Peppol Document Management System
+# Peppol Document Management System
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/spavlovic77s-projects/v0-efabox-prepaid)
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/spavlovic77s-projects)
 [![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/YrcT2zEMtrf)
 [![License: EUPL 1.2](https://img.shields.io/badge/License-EUPL%201.2-blue.svg?style=for-the-badge)](LICENSE.md)
 
 A modern, full-stack web application for managing Peppol BIS documents with integrated wallet management, organization handling, and real-time document tracking.
-
-**Live Demo:** [https://vercel.com/spavlovic77s-projects/v0-efabox-prepaid](https://vercel.com/spavlovic77s-projects/v0-efabox-prepaid)
-
-**Continue Building:** [https://v0.app/chat/YrcT2zEMtrf](https://v0.app/chat/YrcT2zEMtrf)
 
 **GitHub Repository:** [https://github.com/spavlovic77/demopostar](https://github.com/spavlovic77/demopostar)
 
@@ -34,7 +30,7 @@ A modern, full-stack web application for managing Peppol BIS documents with inte
 
 ## 🎯 Overview
 
-Efabox Prepaid is a comprehensive Peppol document exchange platform that enables businesses to send and receive electronic invoices and other business documents through the Peppol network. The system features a prepaid wallet model, multi-organization support, and real-time document tracking.
+A comprehensive Peppol document exchange platform that enables businesses to send and receive electronic invoices and other business documents through the Peppol network. The system features a prepaid wallet model, multi-organization support, and real-time document tracking.
 
 ### What is Peppol?
 
