@@ -1,11 +1,9 @@
-import { LoginForm } from "@/components/login-form"
+import { ReceivedDocumentsInbox } from "@/components/received-documents-inbox"
 
-export default function HomePage() {
+export default function Page() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background flex items-center justify-center p-4 md:p-8">
-      <div className="w-full max-w-xl">
-        <LoginForm />
-      </div>
+    <div className="h-screen w-full">
+      <ReceivedDocumentsInbox />
     </div>
   )
 }
