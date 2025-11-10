@@ -524,108 +524,34 @@ export function UserProfileManagement() {
                   {detailedOrganizations.map((org) => (
                     <Card key={org.id} className="p-6">
                       <div className="space-y-4">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h3 className="text-xl font-semibold text-foreground">{org.name}</h3>
-                            <p className="text-sm text-muted-foreground">ID: {org.id}</p>
-                          </div>
-                          <Badge variant="default">Aktívna</Badge>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <p className="text-sm font-medium text-muted-foreground">Krajina</p>
-                            <p className="text-base text-foreground">{org.country}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-muted-foreground">Referencia</p>
-                            <p className="text-base text-foreground">{org.reference || "N/A"}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-muted-foreground">Publikovať v SMP</p>
-                            <p className="text-base text-foreground">{org.publish_in_smp ? "Áno" : "Nie"}</p>
-                          </div>
+                        <div>
+                          <h3 className="text-xl font-semibold text-foreground">{org.name}</h3>
                         </div>
 
                         {org.identifiers && org.identifiers.length > 0 && (
                           <div>
                             <p className="text-sm font-medium text-muted-foreground mb-2">Identifikátory</p>
                             <div className="space-y-2">
-                              {org.identifiers.map((identifier) => (
-                                <Card key={identifier.id} className="p-3 bg-muted/50">
-                                  <div className="flex items-start justify-between">
-                                    <div className="space-y-1">
-                                      <p className="font-mono text-sm text-foreground">
-                                        {identifier.scheme}:{identifier.identifier}
-                                      </p>
-                                      <div className="flex gap-2 flex-wrap">
-                                        <Badge
-                                          variant={identifier.verified ? "default" : "secondary"}
-                                          className="text-xs"
-                                        >
-                                          {identifier.verified ? "Verified" : "Unverified"}
-                                        </Badge>
-                                        {identifier.publish_receive_peppolbis && (
-                                          <Badge variant="outline" className="text-xs">
-                                            Peppol BIS
-                                          </Badge>
-                                        )}
-                                        {identifier.publish_receive_nlcius && (
-                                          <Badge variant="outline" className="text-xs">
-                                            NL CIUS
-                                          </Badge>
-                                        )}
-                                        {identifier.publish_receive_invoice_response && (
-                                          <Badge variant="outline" className="text-xs">
-                                            Invoice Response
-                                          </Badge>
-                                        )}
-                                      </div>
-                                    </div>
+                              {org.identifiers.map((identifier) => {
+                                const parseIdentifier = (fullIdentifier: string) => {
+                                  // Remove scheme prefix (e.g., "iso6523-actorid-upis:") and return only the value part
+                                  const parts = fullIdentifier.split(":")
+                                  // If format is "scheme:value1:value2", return "value1:value2"
+                                  // If format is "scheme:value", return "value"
+                                  return parts.length > 1 ? parts.slice(1).join(":") : fullIdentifier
+                                }
+
+                                const parsedIdentifier = parseIdentifier(identifier.identifier)
+
+                                return (
+                                  <div key={identifier.id} className="p-3 bg-muted/50 rounded-lg">
+                                    <p className="font-mono text-sm text-foreground">{parsedIdentifier}</p>
                                   </div>
-                                </Card>
-                              ))}
+                                )
+                              })}
                             </div>
                           </div>
                         )}
-
-                        <div className="pt-2 border-t">
-                          <p className="text-xs text-muted-foreground">API Links</p>
-                          <div className="grid grid-cols-2 gap-2 mt-2">
-                            <a
-                              href={org.links.identifiers}
-                              className="text-xs text-primary hover:underline"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              Identifiers
-                            </a>
-                            <a
-                              href={org.links.users}
-                              className="text-xs text-primary hover:underline"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              Users
-                            </a>
-                            <a
-                              href={org.links.receive_triggers}
-                              className="text-xs text-primary hover:underline"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              Receive Triggers
-                            </a>
-                            <a
-                              href={org.links.logs}
-                              className="text-xs text-primary hover:underline"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              Logs
-                            </a>
-                          </div>
-                        </div>
                       </div>
                     </Card>
                   ))}
