@@ -224,7 +224,7 @@ export function DashboardLayout() {
                       : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground hover:scale-[1.01] hover:shadow-sm"
                   }
                   ${
-                    item.id === "wallet" && walletBalance && walletBalance.available < 5
+                    item.id === "wallet" && walletBalance && walletBalance.available < 0.04
                       ? "border-2 border-orange-400 bg-orange-50 text-orange-800 hover:bg-orange-100"
                       : ""
                   }
@@ -234,14 +234,14 @@ export function DashboardLayout() {
                   <item.icon
                     className={`h-5 w-5 transition-transform duration-200 ${
                       activeSection === item.id ? "scale-110" : ""
-                    } ${item.id === "wallet" && walletBalance && walletBalance.available < 5 ? "text-orange-600" : ""}`}
+                    } ${item.id === "wallet" && walletBalance && walletBalance.available < 0.04 ? "text-orange-600" : ""}`}
                   />
                   <span className="font-medium">{item.label}</span>
                 </div>
                 {item.id === "wallet" && (
                   <div
                     className={`text-xs font-medium px-2 py-1 rounded-full ${
-                      walletBalance && walletBalance.available < 5
+                      walletBalance && walletBalance.available < 0.04
                         ? "bg-orange-200 text-orange-800"
                         : "bg-sidebar-accent/20"
                     }`}
@@ -250,7 +250,9 @@ export function DashboardLayout() {
                       <div className="animate-pulse text-sidebar-foreground/50">Loading...</div>
                     ) : walletBalance?.available !== undefined ? (
                       <span
-                        className={walletBalance.available < 5 ? "text-orange-800" : "text-sidebar-accent-foreground"}
+                        className={
+                          walletBalance.available < 0.04 ? "text-orange-800" : "text-sidebar-accent-foreground"
+                        }
                       >
                         €{walletBalance.available.toFixed(2)}
                       </span>

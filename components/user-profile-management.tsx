@@ -472,7 +472,6 @@ export function UserProfileManagement() {
                               <h3 className="text-base lg:text-xl font-bold text-foreground mb-0.5 lg:mb-1 truncate">
                                 {org.name}
                               </h3>
-                              <p className="text-xs lg:text-sm text-muted-foreground">ID: {org.id}</p>
                             </div>
                             <Dialog
                               open={addUserDialogOpen[org.id] || false}
