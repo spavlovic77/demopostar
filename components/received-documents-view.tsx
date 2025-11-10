@@ -361,7 +361,7 @@ export function ReceivedDocumentsView({ organizationIdentifier, organizations = 
                     className={`cursor-pointer transition-colors ${
                       isRead(transaction.state) ? "hover:bg-muted/50" : "bg-muted/50 hover:bg-muted"
                     }`}
-                    onClick={() => handleViewPDF(transaction.id)}
+                    onClick={() => handleToggleRead(transaction.id, transaction.state)}
                   >
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
