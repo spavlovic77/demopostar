@@ -195,7 +195,7 @@ export function LoginForm() {
     <Card className="w-full border-2 shadow-xl">
       <CardHeader className="space-y-3 pb-8 pt-8">
         <CardTitle className="text-3xl md:text-4xl font-bold text-center bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-          Efabox Prepaid
+          Demo digitálny poštár
         </CardTitle>
         <CardDescription className="text-center text-base md:text-lg">Demo digitálny poštár faktúr</CardDescription>
       </CardHeader>
