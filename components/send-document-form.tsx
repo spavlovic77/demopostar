@@ -83,8 +83,26 @@ export function SendDocumentForm() {
   const [organizationData, setOrganizationData] = useState<OrganizationData | null>(null)
   const [isGeneratingTestInvoice, setIsGeneratingTestInvoice] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [draggingSample, setDraggingSample] = useState<string | null>(null)
 
   const DOCUMENT_FEE = 0.01 // Updated document fee from 0.001 to 0.01 EUR
+
+  const sampleInvoices = [
+    {
+      id: "sample-1",
+      name: "Faktúra pre Maliara Pava",
+      filename: "Uctovnik_Janko_Maliarovi_Palovi.xml",
+      path: "/sample-invoices/Uctovnik_Janko_Maliarovi_Palovi.xml",
+      description: "Vzorová faktúra pre maliarské práce",
+    },
+    {
+      id: "sample-2",
+      name: "Faktúra pre Nechtárku Martu",
+      filename: "Uctovnik_Janko_Nechtarke_Marte.xml",
+      path: "/sample-invoices/Uctovnik_Janko_Nechtarke_Marte.xml",
+      description: "Vzorová faktúra pre kozmetické služby",
+    },
+  ]
 
   useEffect(() => {
     loadWalletBalance()
@@ -305,11 +323,32 @@ export function SendDocumentForm() {
     }
   }
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
     setDragActive(false)
+    setDraggingSample(null)
 
+    // Check if it's a sample invoice
+    const sampleData = e.dataTransfer.getData("sample-invoice")
+    if (sampleData) {
+      try {
+        const sample = JSON.parse(sampleData)
+        const response = await fetch(sample.path)
+        if (!response.ok) throw new Error("Failed to load sample invoice")
+
+        const xmlContent = await response.text()
+        const blob = new Blob([xmlContent], { type: "application/xml" })
+        const file = new File([blob], sample.filename, { type: "application/xml" })
+
+        handleFileSelection(file)
+      } catch (error) {
+        setError("Failed to load sample invoice")
+      }
+      return
+    }
+
+    // Handle regular file drop
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFileSelection(e.dataTransfer.files[0])
     }
@@ -478,152 +517,28 @@ export function SendDocumentForm() {
     }
   }
 
-  const generateTestInvoice = async () => {
-    if (!organizationData) {
-      setError("Organization data not available")
-      return
-    }
+  const handleSampleDragStart = (e: React.DragEvent, sample: (typeof sampleInvoices)[0]) => {
+    e.dataTransfer.effectAllowed = "copy"
+    e.dataTransfer.setData("sample-invoice", JSON.stringify(sample))
+    setDraggingSample(sample.id)
+  }
 
-    setIsGeneratingTestInvoice(true)
-    setError("")
+  const handleSampleDragEnd = () => {
+    setDraggingSample(null)
+  }
 
+  const handleSampleClick = async (sample: (typeof sampleInvoices)[0]) => {
     try {
-      const templateResponse = await fetch("/sample-invoice.xml")
-      if (!templateResponse.ok) {
-        throw new Error("Failed to load invoice template")
-      }
+      const response = await fetch(sample.path)
+      if (!response.ok) throw new Error("Failed to load sample invoice")
 
-      let invoiceXml = await templateResponse.text()
+      const xmlContent = await response.text()
+      const blob = new Blob([xmlContent], { type: "application/xml" })
+      const file = new File([blob], sample.filename, { type: "application/xml" })
 
-      try {
-        const parser = new DOMParser()
-        const xmlDoc = parser.parseFromString(invoiceXml, "application/xml")
-        const parseError = xmlDoc.getElementsByTagName("parsererror")
-        if (parseError.length > 0) {
-          const errorText = parseError[0].textContent || "Unknown XML parsing error"
-          console.log("[v0] XML template parsing error:", errorText)
-          throw new Error(`Invalid XML template: ${errorText}`)
-        }
-        console.log("[v0] XML template validated successfully")
-      } catch (parseError) {
-        console.error("[v0] XML template validation failed:", parseError)
-        // Don't fail completely on XML validation errors in development
-        console.log("[v0] Continuing with XML processing despite validation error")
-      }
-
-      // Replace supplier information with user's organization data
-      const currentDate = new Date().toISOString().split("T")[0]
-      const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0] // 30 days from now
-      const invoiceId = `TEST-${Date.now()}`
-
-      invoiceXml = invoiceXml
-        .replace(/INV-2025-001/g, invoiceId)
-        .replace(/2025-05-15/g, currentDate)
-        .replace(/2025-06-14/g, dueDate)
-        .replace(
-          /GASTROMANIA CZ s\.r\.o\./g,
-          organizationData.name.replace(/[&<>"']/g, (match) => {
-            const escapeMap: { [key: string]: string } = {
-              "&": "&amp;",
-              "<": "&lt;",
-              ">": "&gt;",
-              '"': "&quot;",
-              "'": "&#39;",
-            }
-            return escapeMap[match]
-          }),
-        )
-
-      // Get Peppol identifiers for proper formatting
-      const tokens = AuthService.getTokens()
-      if (tokens && organizationData.id) {
-        try {
-          const identifiersResponse = await fetch(`/api/ion-ap/organizations/${organizationData.id}/identifiers`, {
-            headers: {
-              Authorization: `Bearer ${tokens.access}`,
-            },
-          })
-
-          if (identifiersResponse.ok) {
-            const identifiersData = await identifiersResponse.json()
-            const peppolIdentifier = identifiersData.results?.[0]
-
-            if (peppolIdentifier && peppolIdentifier.scheme && peppolIdentifier.identifier) {
-              const schemeId = String(peppolIdentifier.scheme).trim()
-              const identifierValue = String(peppolIdentifier.identifier).trim()
-
-              console.log("[v0] Using Peppol identifier:", { schemeId, identifierValue })
-
-              invoiceXml = invoiceXml.replace(
-                /<cbc:EndpointID\s+schemeID="9950">0-28654684<\/cbc:EndpointID>/g,
-                `<cbc:EndpointID schemeID="${schemeId}">${identifierValue}</cbc:EndpointID>`,
-              )
-
-              // Replace CompanyID in PartyTaxScheme
-              invoiceXml = invoiceXml.replace(
-                /<cbc:CompanyID>CZ0-28654684<\/cbc:CompanyID>/g,
-                `<cbc:CompanyID>${schemeId}${identifierValue}</cbc:CompanyID>`,
-              )
-
-              // Replace CompanyID in PartyLegalEntity with schemeID attribute
-              invoiceXml = invoiceXml.replace(
-                /<cbc:CompanyID\s+schemeID="0154">28654684<\/cbc:CompanyID>/g,
-                `<cbc:CompanyID schemeID="${schemeId}">${identifierValue}</cbc:CompanyID>`,
-              )
-            }
-          }
-        } catch (identifierError) {
-          console.log("[v0] Could not fetch fresh identifier data, using cached data")
-          if (organizationData.peppol_identifier) {
-            const cachedId = String(organizationData.peppol_identifier).trim()
-            if (cachedId) {
-              console.log("[v0] Using cached Peppol identifier:", cachedId)
-              invoiceXml = invoiceXml.replace(
-                /<cbc:EndpointID\s+schemeID="9950">0-28654684<\/cbc:EndpointID>/g,
-                `<cbc:EndpointID schemeID="9950">${cachedId}</cbc:EndpointID>`,
-              )
-              invoiceXml = invoiceXml.replace(
-                /<cbc:CompanyID>CZ0-28654684<\/cbc:CompanyID>/g,
-                `<cbc:CompanyID>9950${cachedId}</cbc:CompanyID>`,
-              )
-              invoiceXml = invoiceXml.replace(
-                /<cbc:CompanyID\s+schemeID="0154">28654684<\/cbc:CompanyID>/g,
-                `<cbc:CompanyID schemeID="9950">${cachedId}</cbc:CompanyID>`,
-              )
-            }
-          }
-        }
-      }
-
-      try {
-        const parser = new DOMParser()
-        const finalXmlDoc = parser.parseFromString(invoiceXml, "application/xml")
-        const finalParseError = finalXmlDoc.getElementsByTagName("parsererror")
-        if (finalParseError.length > 0) {
-          const errorText = finalParseError[0].textContent || "Unknown XML parsing error"
-          console.log("[v0] Generated XML parsing error:", errorText)
-          console.log("[v0] Generated XML content:", invoiceXml.substring(0, 500) + "...")
-          throw new Error(`Generated XML is malformed: ${errorText}`)
-        }
-        console.log("[v0] Generated XML validated successfully")
-      } catch (finalParseError) {
-        console.error("[v0] Generated XML validation failed:", finalParseError)
-        console.log("[v0] Generated XML content:", invoiceXml.substring(0, 500) + "...")
-        // Don't fail completely on XML validation errors in development
-        console.log("[v0] Continuing with file creation despite validation error")
-      }
-
-      // Create a blob and file from the modified XML
-      const blob = new Blob([invoiceXml], { type: "application/xml" })
-      const file = new File([blob], `test-invoice-${invoiceId}.xml`, { type: "application/xml" })
-
-      console.log("[v0] Test invoice generated successfully:", file.name)
       handleFileSelection(file)
     } catch (error) {
-      console.error("[v0] Error generating test invoice:", error)
-      setError(error instanceof Error ? error.message : "Failed to generate test invoice")
-    } finally {
-      setIsGeneratingTestInvoice(false)
+      setError("Failed to load sample invoice")
     }
   }
 
@@ -657,7 +572,7 @@ export function SendDocumentForm() {
                 )}
               </div>
               <Button
-                onClick={generateTestInvoice}
+                onClick={handleSendDocument}
                 disabled={isGeneratingTestInvoice || selectedFile !== null}
                 variant="outline"
                 className="w-full bg-transparent"
@@ -804,6 +719,65 @@ export function SendDocumentForm() {
                 Zrušiť
               </Button>
             )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-accent/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <FileText className="h-5 w-5 text-accent" />
+            Vzorové faktúry na testovanie
+          </CardTitle>
+          <CardDescription>
+            Presuňte vzorový dokument do oblasti vyššie alebo kliknite na dokument pre jeho vybratie
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {sampleInvoices.map((sample) => (
+              <div
+                key={sample.id}
+                draggable
+                onDragStart={(e) => handleSampleDragStart(e, sample)}
+                onDragEnd={handleSampleDragEnd}
+                onClick={() => handleSampleClick(sample)}
+                className={`
+                  group relative border-2 border-dashed rounded-lg p-4 cursor-move transition-all
+                  hover:border-accent hover:bg-accent/5 hover:shadow-md
+                  ${draggingSample === sample.id ? "opacity-50 scale-95" : "opacity-100"}
+                  ${selectedFile?.name === sample.filename ? "border-primary bg-primary/5" : "border-border"}
+                `}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0">
+                    <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+                      <FileText className="h-5 w-5 text-accent" />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-foreground mb-1 truncate">{sample.name}</p>
+                    <p className="text-xs text-muted-foreground mb-2">{sample.description}</p>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="text-xs">
+                        XML
+                      </Badge>
+                      {selectedFile?.name === sample.filename && (
+                        <Badge variant="default" className="text-xs">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Vybraté
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="text-xs text-muted-foreground bg-background/80 backdrop-blur-sm px-2 py-1 rounded border border-border">
+                    Presunúť alebo kliknúť
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
