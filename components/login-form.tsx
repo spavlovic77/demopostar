@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -41,6 +42,7 @@ export function LoginForm() {
     identifier: "",
     email: "",
   })
+  const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,8 +50,6 @@ export function LoginForm() {
     setError("")
 
     try {
-      console.log("[v0] Starting login process for:", loginData.email)
-
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
@@ -61,104 +61,28 @@ export function LoginForm() {
         }),
       })
 
-      console.log("[v0] Login response status:", response.status)
-
       if (!response.ok) {
         const errorData = await response.json()
-        console.log("[v0] Login failed with error:", errorData)
         throw new Error(errorData.error || "Invalid credentials")
       }
 
       const data = await response.json()
-      console.log("[v0] Login successful, received data:", data)
 
       if (!data.access || !data.refresh) {
-        console.error("[v0] Missing tokens in response:", data)
         throw new Error("Invalid response from server")
       }
 
-      console.log("[v0] Storing tokens in localStorage")
-
       try {
-        // Test localStorage availability with a more comprehensive check
-        const testKey = "__localStorage_test__"
-        const testValue = "test"
+        localStorage.setItem("access_token", data.access)
+        localStorage.setItem("refresh_token", data.refresh)
 
-        try {
-          localStorage.setItem(testKey, testValue)
-          const retrieved = localStorage.getItem(testKey)
-          localStorage.removeItem(testKey)
-
-          if (retrieved !== testValue) {
-            throw new Error("localStorage test failed - values don't match")
-          }
-        } catch (testError) {
-          console.error("[v0] localStorage test failed:", testError)
-          throw new Error("localStorage is not available or not working properly")
-        }
-
-        // Store tokens with error handling for each operation
-        try {
-          localStorage.setItem("access_token", data.access)
-        } catch (accessError) {
-          console.error("[v0] Failed to store access token:", accessError)
-          throw new Error("Failed to store access token")
-        }
-
-        try {
-          localStorage.setItem("refresh_token", data.refresh)
-        } catch (refreshError) {
-          console.error("[v0] Failed to store refresh token:", refreshError)
-          // Try to clean up access token if refresh fails
-          localStorage.removeItem("access_token")
-          throw new Error("Failed to store refresh token")
-        }
-
-        // Verification with retry mechanism
-        let verificationAttempts = 0
-        const maxAttempts = 3
-        let storedAccess = null
-        let storedRefresh = null
-
-        while (verificationAttempts < maxAttempts) {
-          storedAccess = localStorage.getItem("access_token")
-          storedRefresh = localStorage.getItem("refresh_token")
-
-          if (storedAccess && storedRefresh) {
-            break
-          }
-
-          verificationAttempts++
-          console.log(`[v0] Token verification attempt ${verificationAttempts}/${maxAttempts}`)
-
-          // Small delay before retry
-          await new Promise((resolve) => setTimeout(resolve, 10))
-        }
-
-        console.log("[v0] Token storage verification:", {
-          accessStored: storedAccess !== null,
-          refreshStored: storedRefresh !== null,
-          accessLength: storedAccess?.length || 0,
-          refreshLength: storedRefresh?.length || 0,
-          accessMatches: storedAccess === data.access,
-          refreshMatches: storedRefresh === data.refresh,
-          attempts: verificationAttempts,
-        })
+        const storedAccess = localStorage.getItem("access_token")
+        const storedRefresh = localStorage.getItem("refresh_token")
 
         if (!storedAccess || !storedRefresh) {
-          console.error("[v0] Token storage failed after", verificationAttempts, "attempts")
-          throw new Error("Failed to store authentication tokens - verification failed")
+          throw new Error("Failed to store authentication tokens")
         }
-
-        if (storedAccess !== data.access || storedRefresh !== data.refresh) {
-          console.error("[v0] Token storage failed - stored tokens don't match received tokens")
-          throw new Error("Token storage verification failed - data mismatch")
-        }
-
-        console.log("[v0] Tokens stored and verified successfully")
       } catch (storageError) {
-        console.error("[v0] localStorage error:", storageError)
-
         if (storageError.message.includes("localStorage is not available")) {
           throw new Error(
             "Your browser doesn't support local storage or it's disabled. Please enable cookies and local storage, or try a different browser.",
@@ -172,12 +96,8 @@ export function LoginForm() {
         }
       }
 
-      console.log("[v0] Redirecting to dashboard")
-      setTimeout(() => {
-        window.location.href = "/dashboard"
-      }, 100)
+      router.push("/dashboard")
     } catch (err) {
-      console.error("[v0] Login error:", err)
       setError(err instanceof Error ? err.message : "Login failed")
     } finally {
       setIsLoading(false)
@@ -191,18 +111,9 @@ export function LoginForm() {
     setSuccess("")
 
     try {
-      console.log("[v0] Starting registration process")
-
       if (!/^\d{10}$/.test(registrationData.identifier)) {
         throw new Error("Identifier must be exactly 10 digits")
       }
-
-      // Step 1: Create organization
-      console.log("[v0] Creating organization:", {
-        name: registrationData.organizationName,
-        country: "SK", // Default to SK
-        publish_in_smp: registrationData.publishInSmp,
-      })
 
       const orgResponse = await fetch("/api/organizations", {
         method: "POST",
@@ -211,41 +122,33 @@ export function LoginForm() {
         },
         body: JSON.stringify({
           name: registrationData.organizationName,
-          country: "SK", // Always use SK
+          country: "SK",
           publish_in_smp: registrationData.publishInSmp,
         }),
       })
 
-      console.log("[v0] Organization response status:", orgResponse.status)
-
       if (!orgResponse.ok) {
         const errorData = await orgResponse.json()
-        console.log("[v0] Organization creation failed:", errorData)
         throw new Error(`Failed to create organization: ${errorData.details || errorData.error}`)
       }
 
       const orgData = await orgResponse.json()
-      console.log("[v0] Organization created:", orgData)
       const organizationId = orgData.id
 
-      // Step 2: Add identifier to organization
       const identifierResponse = await fetch(`/api/organizations/${organizationId}/identifiers`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          scheme: "9950", // Always use 9950
+          scheme: "9950",
           identifier: registrationData.identifier,
           verified: true,
         }),
       })
 
-      console.log("[v0] Identifier response status:", identifierResponse.status)
-
       if (!identifierResponse.ok) {
         const errorData = await identifierResponse.json()
-        console.log("[v0] Identifier addition failed:", errorData)
         throw new Error(`Failed to add identifier: ${errorData.details || errorData.error}`)
       }
 
@@ -256,23 +159,19 @@ export function LoginForm() {
         },
         body: JSON.stringify({
           email: registrationData.email,
-          first_name: registrationData.organizationName, // Use organization name as first name
-          last_name: "Admin", // Default last name
-          password: `${registrationData.identifier}@${registrationData.organizationName.replace(/\s+/g, "")}`, // Generate password from identifier and org name
+          first_name: registrationData.organizationName,
+          last_name: "Admin",
+          password: `${registrationData.identifier}@${registrationData.organizationName.replace(/\s+/g, "")}`,
         }),
       })
 
-      console.log("[v0] User response status:", userResponse.status)
-
       if (!userResponse.ok) {
         const errorData = await userResponse.json()
-        console.log("[v0] User creation failed:", errorData)
         throw new Error(`Failed to create user: ${errorData.details || errorData.error}`)
       }
 
       setSuccess("Registration successful! You can now log in with your credentials.")
 
-      // Reset form
       setRegistrationData({
         organizationName: "",
         publishInSmp: true,
@@ -280,7 +179,6 @@ export function LoginForm() {
         email: "",
       })
     } catch (err) {
-      console.error("[v0] Registration error:", err)
       setError(err instanceof Error ? err.message : "Registration failed")
     } finally {
       setIsLoading(false)
@@ -293,7 +191,7 @@ export function LoginForm() {
       setCopiedField(field)
       setTimeout(() => setCopiedField(null), 2000)
     } catch (err) {
-      console.error("[v0] Failed to copy:", err)
+      // Silent failure for copy operation
     }
   }
 

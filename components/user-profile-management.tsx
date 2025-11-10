@@ -9,8 +9,23 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Lock, CheckCircle, AlertCircle, Key, Shield, Loader2, Save, RefreshCw, UserPlus, Trash2 } from "lucide-react"
-import { AuthService, type UserData } from "@/lib/auth"
+import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Lock,
+  CheckCircle,
+  AlertCircle,
+  Key,
+  Shield,
+  Loader2,
+  Save,
+  RefreshCw,
+  UserPlus,
+  Trash2,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react"
+import { AuthService } from "@/lib/auth"
+import { useAppContext } from "@/lib/app-context"
 import {
   Dialog,
   DialogContent,
@@ -74,11 +89,12 @@ interface Organization {
 }
 
 export function UserProfileManagement() {
-  const [userData, setUserData] = useState<UserData | null>(null)
+  const { userData, organizations, refreshUserData, refreshOrganizations } = useAppContext()
+
   const [organizationData, setOrganizationData] = useState<string[]>([])
   const [apiTokens, setApiTokens] = useState<ApiToken[]>([])
   const [peppolIdentifiers, setPeppolIdentifiers] = useState<PeppolIdentifier[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [isUpdating, setIsUpdating] = useState(false)
@@ -87,139 +103,59 @@ export function UserProfileManagement() {
     newPassword: "",
     confirmPassword: "",
   })
-  const [organizations, setOrganizations] = useState<Organization[]>([])
   const [addUserDialogOpen, setAddUserDialogOpen] = useState<{ [key: number]: boolean }>({})
   const [newUserEmail, setNewUserEmail] = useState<{ [key: number]: string }>({})
   const [detailedOrganizations, setDetailedOrganizations] = useState<OrganizationDetails[]>([])
   const [loadingOrganizations, setLoadingOrganizations] = useState(false)
   const [organizationUsers, setOrganizationUsers] = useState<{ [key: number]: OrganizationUser[] }>({})
   const [loadingUsers, setLoadingUsers] = useState<{ [key: number]: boolean }>({})
+  const [expandedOrgs, setExpandedOrgs] = useState<{ [key: number]: boolean }>({})
 
   useEffect(() => {
-    loadUserProfile()
-  }, [])
-
-  const loadUserProfile = async () => {
-    console.log("[v0] Loading user profile...")
-    setLoading(true)
-    setError("")
-
-    try {
-      const tokens = AuthService.getTokens()
-      if (!tokens) throw new Error("Authentication required")
-
-      console.log("[v0] Tokens available, fetching user data...")
-
-      const user = await AuthService.getUserData()
-      if (!user) {
-        throw new Error("Failed to load user data")
-      }
-      setUserData(user)
-      console.log("[v0] User data loaded:", user)
-
-      if (user.organizations && user.organizations.length > 0) {
-        await loadDetailedOrganizations(user.organizations)
-      }
-
-      // First get organizations from ion-AP
-      const organizationsResponse = await fetch("/api/ion-ap/organizations", {
-        headers: {
-          Authorization: `Bearer ${tokens.access}`,
-        },
-      })
-
-      if (!organizationsResponse.ok) {
-        console.log("[v0] Organizations response failed:", organizationsResponse.status)
-        throw new Error("Failed to load organizations")
-      }
-
-      const organizationsData = await organizationsResponse.json()
-      console.log("[v0] Organizations data:", organizationsData)
-
-      const orgs = organizationsData.results || []
-      setOrganizations(orgs)
-      const orgNames = orgs.map((org: any) => org.name)
-      const orgIds = orgs.map((org: any) => org.id)
-
-      setOrganizationData(orgNames)
-
-      // Fetch Peppol identifiers for the first organization
-      if (orgIds.length > 0) {
-        console.log("[v0] Fetching Peppol identifiers for organization:", orgIds[0])
-
-        try {
-          const identifiersResponse = await fetch(`/api/ion-ap/organizations/${orgIds[0]}/identifiers`, {
-            headers: {
-              Authorization: `Bearer ${tokens.access}`,
-            },
-          })
-
-          if (identifiersResponse.ok) {
-            const identifiersData = await identifiersResponse.json()
-            console.log("[v0] Peppol identifiers:", identifiersData)
-            setPeppolIdentifiers(identifiersData.results || [])
-          } else {
-            console.log("[v0] Identifiers response failed:", identifiersResponse.status)
-            setPeppolIdentifiers([])
-          }
-        } catch (identifierError) {
-          console.log("[v0] Error fetching identifiers:", identifierError)
-          setPeppolIdentifiers([])
-        }
-      } else {
-        console.log("[v0] No organizations found")
-        setPeppolIdentifiers([])
-      }
-
-      // Load additional profile data
-      await loadApiTokens()
-
-      console.log("[v0] Profile loaded successfully")
-    } catch (err) {
-      console.log("[v0] Profile loading error:", err)
-      setError(err instanceof Error ? err.message : "Failed to load profile")
-    } finally {
-      setLoading(false)
+    if (organizations.length > 0) {
+      loadDetailedOrganizations()
     }
-  }
+  }, [organizations])
 
-  const loadDetailedOrganizations = async (organizationNames: string[]) => {
+  const loadDetailedOrganizations = async () => {
     setLoadingOrganizations(true)
-    console.log("[v0] Loading detailed organizations for:", organizationNames)
 
     try {
       const detailedOrgs: OrganizationDetails[] = []
 
-      for (const orgName of organizationNames) {
+      const detailPromises = organizations.map(async (org) => {
         try {
-          const response = await fetch(`/api/organizations/search?name=${encodeURIComponent(orgName)}`)
+          const response = await fetch(`/api/organizations/search?name=${encodeURIComponent(org.name)}`)
 
           if (response.ok) {
             const orgDetails = await response.json()
-            detailedOrgs.push(orgDetails)
-            console.log("[v0] Loaded details for:", orgName, orgDetails)
-
-            await loadOrganizationUsers(orgDetails.id)
-          } else {
-            console.log("[v0] Failed to load details for:", orgName)
+            return orgDetails
           }
         } catch (err) {
-          console.log("[v0] Error loading organization:", orgName, err)
+          return null
         }
-      }
+        return null
+      })
 
-      setDetailedOrganizations(detailedOrgs)
-      console.log("[v0] All detailed organizations loaded:", detailedOrgs)
+      const results = await Promise.all(detailPromises)
+      const validOrgs = results.filter((org): org is OrganizationDetails => org !== null)
+
+      setDetailedOrganizations(validOrgs)
+
+      await Promise.all(validOrgs.map((org) => loadOrganizationUsers(org.id)))
     } catch (err) {
-      console.log("[v0] Error loading detailed organizations:", err)
+      // Silent error handling
     } finally {
       setLoadingOrganizations(false)
     }
   }
 
   const loadOrganizationUsers = async (orgId: number) => {
+    if (organizationUsers[orgId]) {
+      return
+    }
+
     setLoadingUsers((prev) => ({ ...prev, [orgId]: true }))
-    console.log("[v0] Loading users for organization:", orgId)
 
     try {
       const response = await fetch(`/api/organizations/${orgId}/users`)
@@ -228,23 +164,14 @@ export function UserProfileManagement() {
         const data = await response.json()
         const users = data.results || []
         setOrganizationUsers((prev) => ({ ...prev, [orgId]: users }))
-        console.log("[v0] Users loaded for org", orgId, ":", users)
       } else {
-        console.log("[v0] Failed to load users for org:", orgId)
         setOrganizationUsers((prev) => ({ ...prev, [orgId]: [] }))
       }
     } catch (err) {
-      console.log("[v0] Error loading users for org:", orgId, err)
       setOrganizationUsers((prev) => ({ ...prev, [orgId]: [] }))
     } finally {
       setLoadingUsers((prev) => ({ ...prev, [orgId]: false }))
     }
-  }
-
-  const loadApiTokens = async () => {
-    // Note: This would require an endpoint to list user's API tokens
-    // For now, we'll show a placeholder
-    setApiTokens([])
   }
 
   const handlePasswordUpdate = async (e: React.FormEvent) => {
@@ -287,10 +214,8 @@ export function UserProfileManagement() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          // Try to refresh token
           const newTokens = await AuthService.refreshToken()
           if (newTokens) {
-            // Retry with new token
             const retryResponse = await fetch("/api/auth/update-password", {
               method: "POST",
               headers: {
@@ -341,7 +266,6 @@ export function UserProfileManagement() {
 
       if (response.ok) {
         setSuccess("API token created successfully")
-        await loadApiTokens()
       } else {
         throw new Error("Failed to create API token")
       }
@@ -420,13 +344,13 @@ export function UserProfileManagement() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="text-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-        <p className="text-muted-foreground">Načítavam profil...</p>
-      </div>
-    )
+  const toggleOrgExpansion = (orgId: number) => {
+    const isExpanding = !expandedOrgs[orgId]
+    setExpandedOrgs((prev) => ({ ...prev, [orgId]: isExpanding }))
+
+    if (isExpanding && !organizationUsers[orgId]) {
+      loadOrganizationUsers(orgId)
+    }
   }
 
   if (!userData) {
@@ -442,7 +366,14 @@ export function UserProfileManagement() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-foreground">Používateľský profil</h1>
-        <Button variant="outline" onClick={loadUserProfile} disabled={loading}>
+        <Button
+          variant="outline"
+          onClick={() => {
+            refreshUserData()
+            refreshOrganizations()
+          }}
+          disabled={loading}
+        >
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
           Obnoviť
         </Button>
@@ -482,9 +413,42 @@ export function UserProfileManagement() {
             </CardHeader>
             <CardContent>
               {loadingOrganizations ? (
-                <div className="text-center py-8">
-                  <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">Načítavam organizácie...</p>
+                <div className="space-y-6">
+                  {[1, 2].map((i) => (
+                    <Card key={i} className="border-2">
+                      <CardContent className="p-8">
+                        <div className="space-y-6">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 space-y-2">
+                              <Skeleton className="h-8 w-48" />
+                              <Skeleton className="h-4 w-32" />
+                            </div>
+                            <Skeleton className="h-10 w-40" />
+                          </div>
+
+                          <div className="border-t pt-6 space-y-4">
+                            <div className="flex items-center gap-2">
+                              <div className="h-8 w-1 bg-primary rounded-full" />
+                              <Skeleton className="h-6 w-24" />
+                            </div>
+                            <Skeleton className="h-16 w-full rounded-lg" />
+                          </div>
+
+                          <div className="border-t pt-6 space-y-4">
+                            <div className="flex items-center gap-2">
+                              <div className="h-8 w-1 bg-primary rounded-full" />
+                              <Skeleton className="h-6 w-32" />
+                            </div>
+                            <div className="space-y-3">
+                              {[1, 2].map((j) => (
+                                <Skeleton key={j} className="h-16 w-full rounded-lg" />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
               ) : detailedOrganizations.length === 0 ? (
                 <div className="text-center py-8">
@@ -590,53 +554,78 @@ export function UserProfileManagement() {
                           )}
 
                           <div className="border-t pt-6">
-                            <div className="flex items-center gap-2 mb-4">
+                            <button
+                              onClick={() => toggleOrgExpansion(org.id)}
+                              className="flex items-center gap-2 mb-4 w-full hover:opacity-80 transition-opacity"
+                            >
                               <div className="h-8 w-1 bg-primary rounded-full" />
                               <h4 className="text-lg font-semibold text-foreground">Používatelia</h4>
-                            </div>
-                            {loadingUsers[org.id] ? (
-                              <div className="text-center py-6">
-                                <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
-                              </div>
-                            ) : organizationUsers[org.id] && organizationUsers[org.id].length > 0 ? (
-                              <div className="space-y-3">
-                                {organizationUsers[org.id].map((user) => (
-                                  <div
-                                    key={user.id}
-                                    className="flex items-center justify-between p-4 bg-muted/50 border border-muted rounded-lg hover:bg-muted/70 transition-colors"
-                                  >
-                                    <div className="flex items-center gap-3">
-                                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                        <span className="text-primary font-semibold text-base">
-                                          {user.email.charAt(0).toUpperCase()}
-                                        </span>
+                              {expandedOrgs[org.id] ? (
+                                <ChevronDown className="h-5 w-5 ml-auto text-muted-foreground" />
+                              ) : (
+                                <ChevronRight className="h-5 w-5 ml-auto text-muted-foreground" />
+                              )}
+                            </button>
+
+                            {expandedOrgs[org.id] && (
+                              <>
+                                {loadingUsers[org.id] ? (
+                                  <div className="space-y-3">
+                                    {[1, 2, 3].map((i) => (
+                                      <div
+                                        key={i}
+                                        className="flex items-center gap-3 p-4 bg-muted/50 border border-muted rounded-lg"
+                                      >
+                                        <Skeleton className="h-10 w-10 rounded-full" />
+                                        <div className="flex-1 space-y-2">
+                                          <Skeleton className="h-4 w-48" />
+                                          <Skeleton className="h-3 w-24" />
+                                        </div>
+                                        <Skeleton className="h-8 w-8 rounded" />
                                       </div>
-                                      <div>
-                                        <p className="text-base font-medium text-foreground">{user.email}</p>
-                                        {user.email_verified && (
-                                          <div className="flex items-center gap-1 mt-0.5">
-                                            <CheckCircle className="h-3.5 w-3.5 text-green-600" />
-                                            <span className="text-xs text-green-600 font-medium">Overený</span>
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleRemoveUser(org.id, user.id, user.email)}
-                                      disabled={isUpdating}
-                                      className="hover:bg-destructive/10"
-                                    >
-                                      <Trash2 className="h-4 w-4 text-destructive" />
-                                    </Button>
+                                    ))}
                                   </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="text-center py-6 px-4 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/30">
-                                <p className="text-base text-muted-foreground">Žiadni používatelia</p>
-                              </div>
+                                ) : organizationUsers[org.id] && organizationUsers[org.id].length > 0 ? (
+                                  <div className="space-y-3">
+                                    {organizationUsers[org.id].map((user) => (
+                                      <div
+                                        key={user.id}
+                                        className="flex items-center justify-between p-4 bg-muted/50 border border-muted rounded-lg hover:bg-muted/70 transition-colors"
+                                      >
+                                        <div className="flex items-center gap-3">
+                                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                            <span className="text-primary font-semibold text-base">
+                                              {user.email.charAt(0).toUpperCase()}
+                                            </span>
+                                          </div>
+                                          <div>
+                                            <p className="text-base font-medium text-foreground">{user.email}</p>
+                                            {user.email_verified && (
+                                              <div className="flex items-center gap-1 mt-0.5">
+                                                <CheckCircle className="h-3.5 w-3.5 text-green-600" />
+                                                <span className="text-xs text-green-600 font-medium">Overený</span>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleRemoveUser(org.id, user.id, user.email)}
+                                          disabled={isUpdating}
+                                          className="hover:bg-destructive/10"
+                                        >
+                                          <Trash2 className="h-4 w-4 text-destructive" />
+                                        </Button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <div className="text-center py-6 px-4 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/30">
+                                    <p className="text-base text-muted-foreground">Žiadni používatelia</p>
+                                  </div>
+                                )}
+                              </>
                             )}
                           </div>
                         </div>

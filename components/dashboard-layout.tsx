@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarInitials } from "@/components/ui/avatar"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Send,
   Inbox,
@@ -17,12 +18,13 @@ import {
   ChevronRight,
   Building2,
 } from "lucide-react"
-import { AuthService, type UserData } from "@/lib/auth"
+import { AuthService } from "@/lib/auth"
 import { SendDocumentForm } from "@/components/send-document-form"
 import { ReceivedDocumentsView } from "@/components/received-documents-view"
 import { SentDocumentsView } from "@/components/sent-documents-view"
 import { UserProfileManagement } from "@/components/user-profile-management"
 import { WalletManagement } from "@/components/wallet-management"
+import { useAppContext } from "@/lib/app-context"
 
 interface DashboardStats {
   totalSent: number
@@ -48,9 +50,10 @@ interface Organization {
 }
 
 export function DashboardLayout() {
+  const { userData, walletBalance, organizations, isLoading, walletLoading, refreshWalletBalance } = useAppContext()
+
   const [activeSection, setActiveSection] = useState("send")
   const [selectedOrganizationIdentifier, setSelectedOrganizationIdentifier] = useState<string | null>(null)
-  const [userData, setUserData] = useState<UserData | null>(null)
   const [stats, setStats] = useState<DashboardStats>({
     totalSent: 0,
     totalReceived: 0,
@@ -58,109 +61,13 @@ export function DashboardLayout() {
     failedSent: 0,
   })
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const [walletBalance, setWalletBalance] = useState<WalletBalance | null>(null)
-  const [walletLoading, setWalletLoading] = useState(true)
-  const [organizations, setOrganizations] = useState<Organization[]>([])
   const [foldersExpanded, setFoldersExpanded] = useState(true)
 
-  const loadOrganizations = async () => {
-    try {
-      const tokens = AuthService.getTokens()
-      if (!tokens) return
-
-      const user = await AuthService.getUserData()
-      if (!user || !user.organizations || user.organizations.length === 0) return
-
-      const orgPromises = user.organizations.map(async (orgName: string) => {
-        try {
-          const response = await fetch(`/api/organizations/search?name=${encodeURIComponent(orgName)}`, {
-            headers: {
-              Authorization: `Bearer ${tokens.access}`,
-            },
-          })
-
-          if (response.ok) {
-            const data = await response.json()
-            return data
-          }
-        } catch (error) {
-          console.error(`Failed to fetch organization ${orgName}:`, error)
-        }
-        return null
-      })
-
-      const orgsData = await Promise.all(orgPromises)
-      const validOrgs = orgsData.filter((org): org is Organization => org !== null)
-      setOrganizations(validOrgs)
-    } catch (error) {
-      console.error("Error loading organizations:", error)
-    }
-  }
-
-  const loadWalletBalance = async () => {
-    try {
-      setWalletLoading(true)
-      console.log("[v0] Loading wallet balance...")
-      const response = await fetch("/api/wallet/balance", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        },
-      })
-
-      if (response.ok) {
-        const balance = await response.json()
-        console.log("[v0] Wallet balance response:", balance)
-        setWalletBalance({
-          available: balance.available_balance || 0,
-          reserved: balance.reserved_balance || 0,
-          total: balance.total_balance || 0,
-        })
-      } else {
-        console.error("[v0] Failed to fetch wallet balance:", response.status)
-      }
-    } catch (error) {
-      console.error("[v0] Error loading wallet balance:", error)
-    } finally {
-      setWalletLoading(false)
-    }
-  }
-
   useEffect(() => {
-    console.log("[v0] Dashboard loading, checking authentication...")
-
-    const loadUserData = async () => {
-      try {
-        if (!AuthService.isAuthenticated()) {
-          console.log("[v0] Not authenticated, redirecting to login")
-          AuthService.logout()
-          return
-        }
-
-        console.log("[v0] Authentication check passed, loading user data...")
-
-        const user = await AuthService.getUserData()
-        if (user) {
-          console.log("[v0] User data loaded successfully:", user)
-          setUserData(user)
-          await loadWalletBalance()
-          await loadOrganizations()
-
-          setActiveSection("wallet")
-        } else {
-          console.log("[v0] Failed to load user data, logging out")
-          AuthService.logout()
-        }
-      } catch (error) {
-        console.error("[v0] Error loading user data:", error)
-        AuthService.logout()
-      } finally {
-        setIsLoading(false)
-      }
+    if (userData) {
+      setActiveSection("wallet")
     }
-
-    loadUserData()
-  }, [])
+  }, [userData])
 
   const handleLogout = () => {
     AuthService.logout()
@@ -202,7 +109,7 @@ export function DashboardLayout() {
         return <SendDocumentForm />
 
       case "wallet":
-        return <WalletManagement onBalanceUpdate={loadWalletBalance} />
+        return <WalletManagement onBalanceUpdate={refreshWalletBalance} />
 
       case "profile":
         return <UserProfileManagement />
@@ -214,10 +121,46 @@ export function DashboardLayout() {
 
   if (isLoading || !userData) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Načítavam...</p>
+      <div className="min-h-screen bg-background flex">
+        <div className="fixed inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-sidebar-border">
+          <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <FileText className="h-4 w-4 text-primary-foreground" />
+              </div>
+              <span className="font-bold text-sidebar-foreground">Demo poštár faktúr</span>
+            </div>
+          </div>
+
+          <nav className="p-4 space-y-2">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Skeleton key={i} className="h-12 w-full rounded-lg" />
+            ))}
+          </nav>
+
+          <div className="absolute bottom-4 left-4 right-4">
+            <div className="flex items-center gap-3 p-3 bg-sidebar-primary rounded-lg">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-3 w-32" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 ml-64">
+          <main className="p-6">
+            <div className="space-y-6">
+              <Skeleton className="h-10 w-64" />
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-32 rounded-lg" />
+                ))}
+              </div>
+              <Skeleton className="h-96 rounded-lg" />
+            </div>
+          </main>
         </div>
       </div>
     )
