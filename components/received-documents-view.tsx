@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { RefreshCw, Download, FileText, Mail, MailOpen, ChevronLeft, ChevronRight, MoreVertical } from "lucide-react"
+import { RefreshCw, Download, FileText, Mail, MailOpen, ChevronLeft, ChevronRight } from "lucide-react"
 import { AuthService } from "@/lib/auth"
 
 interface ReceiveTransaction {
@@ -256,36 +256,6 @@ export function ReceivedDocumentsView({ organizationIdentifier, organizations = 
     return new Date(dateString).toLocaleString()
   }
 
-  const formatRelativeDate = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-
-    if (diffDays === 0) {
-      return "Today"
-    } else if (diffDays === 1) {
-      return "Yesterday"
-    } else if (diffDays === 2) {
-      return "Two days ago"
-    } else if (diffDays < 7) {
-      return `${diffDays} days ago`
-    } else if (diffDays < 14) {
-      return "One week ago"
-    } else if (diffDays < 30) {
-      const weeks = Math.floor(diffDays / 7)
-      return weeks === 1 ? "One week ago" : `${weeks} weeks ago`
-    } else if (diffDays < 60) {
-      return "One month ago"
-    } else if (diffDays < 365) {
-      const months = Math.floor(diffDays / 30)
-      return `${months} months ago`
-    } else {
-      const years = Math.floor(diffDays / 365)
-      return years === 1 ? "One year ago" : `${years} years ago`
-    }
-  }
-
   const isRead = (state: string) => state.toLowerCase() !== "new"
 
   const totalPages = Math.ceil(totalCount / itemsPerPage)
@@ -351,18 +321,12 @@ export function ReceivedDocumentsView({ organizationIdentifier, organizations = 
                   <TableHead>Received date</TableHead>
                   <TableHead>PDF version</TableHead>
                   <TableHead>Download</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
+                  <TableHead>Read</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {transactions.map((transaction) => (
-                  <TableRow
-                    key={transaction.id}
-                    className={`cursor-pointer transition-colors ${
-                      isRead(transaction.state) ? "hover:bg-muted/50" : "bg-muted/50 hover:bg-muted"
-                    }`}
-                    onClick={() => handleToggleRead(transaction.id, transaction.state)}
-                  >
+                  <TableRow key={transaction.id} className={isRead(transaction.state) ? "" : "bg-muted/50"}>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
                         {isRead(transaction.state) ? (
@@ -378,51 +342,34 @@ export function ReceivedDocumentsView({ organizationIdentifier, organizations = 
                         </div>
                       </div>
                     </TableCell>
+                    <TableCell>{formatDate(transaction.created_on)}</TableCell>
                     <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{formatRelativeDate(transaction.created_on)}</span>
-                        <span className="text-xs text-muted-foreground">{formatDate(transaction.created_on)}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <Button variant="ghost" size="sm" onClick={() => handleViewPDF(transaction.id)}>
                         <FileText className="h-4 w-4 mr-2" />
                         View PDF
                       </Button>
                     </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
+                    <TableCell>
                       <Button variant="ghost" size="sm" onClick={() => handleDownloadXML(transaction.id)}>
                         <Download className="h-4 w-4 mr-2" />
                         XML
                       </Button>
                     </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {isRead(transaction.state) ? (
-                            <DropdownMenuItem
-                              onClick={() => handleToggleRead(transaction.id, transaction.state)}
-                              disabled={updatingRead === transaction.id}
-                            >
-                              <Mail className="h-4 w-4 mr-2" />
-                              Mark as Unread
-                            </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuItem
-                              onClick={() => handleToggleRead(transaction.id, transaction.state)}
-                              disabled={updatingRead === transaction.id}
-                            >
-                              <MailOpen className="h-4 w-4 mr-2" />
-                              Mark as Read
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleToggleRead(transaction.id, transaction.state)}
+                        disabled={updatingRead === transaction.id}
+                      >
+                        {updatingRead === transaction.id ? (
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                        ) : isRead(transaction.state) ? (
+                          <Badge variant="secondary">Read</Badge>
+                        ) : (
+                          <Badge variant="default">Unread</Badge>
+                        )}
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
