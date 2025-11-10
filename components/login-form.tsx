@@ -18,12 +18,9 @@ interface LoginData {
 }
 
 interface RegistrationData {
-  // Organization data
   organizationName: string
   publishInSmp: boolean
-  // Identifier data
   identifier: string
-  // User data
   email: string
 }
 
@@ -99,8 +96,7 @@ export function LoginForm() {
       router.push("/dashboard")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed")
-    } finally {
-      setIsLoading(false)
+      setIsLoading(false) // Reset loading state on error
     }
   }
 
@@ -196,73 +192,83 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="text-2xl font-bold text-center">Demo digitálny poštár faktúr</CardTitle>
-        <CardDescription className="text-center">Prihláste sa do svojho účtu alebo vytvorte nový</CardDescription>
+    <Card className="w-full border-2 shadow-xl">
+      <CardHeader className="space-y-3 pb-8 pt-8">
+        <CardTitle className="text-3xl md:text-4xl font-bold text-center bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+          Efabox Prepaid
+        </CardTitle>
+        <CardDescription className="text-center text-base md:text-lg">Demo digitálny poštár faktúr</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-6 pb-8 md:px-8">
         <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">Prihlásenie</TabsTrigger>
-            <TabsTrigger value="register">Registrácia</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 h-12 mb-6">
+            <TabsTrigger value="login" className="text-base md:text-lg">
+              Prihlásenie
+            </TabsTrigger>
+            <TabsTrigger value="register" className="text-base md:text-lg">
+              Registrácia
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="login">
-            <form onSubmit={handleLogin} className="space-y-4">
-              <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950/20">
-                <AlertDescription className="text-sm">
-                  <div className="font-semibold mb-2">Demo prihlasovacie údaje:</div>
-                  <div className="space-y-2 text-xs">
-                    <div className="flex items-center justify-between gap-2">
-                      <div>
-                        <span className="font-medium">E-mail:</span> jankouctovnik@gmail.com
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2 hover:bg-blue-100 dark:hover:bg-blue-900/20"
-                        onClick={() => handleCopy("jankouctovnik@gmail.com", "email")}
-                      >
-                        {copiedField === "email" ? (
-                          <Check className="h-3.5 w-3.5 text-green-600" />
-                        ) : (
-                          <Copy className="h-3.5 w-3.5" />
-                        )}
-                      </Button>
+          <TabsContent value="login" className="space-y-6 mt-6">
+            <Alert className="border-2 border-primary/30 bg-primary/5 shadow-sm">
+              <AlertDescription>
+                <div className="font-semibold text-base mb-3">Demo prihlasovacie údaje:</div>
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-3 p-3 bg-background rounded-lg border">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs text-muted-foreground mb-1">E-mail</div>
+                      <div className="font-mono text-sm md:text-base break-all">jankouctovnik@gmail.com</div>
                     </div>
-                    <div className="flex items-center justify-between gap-2">
-                      <div>
-                        <span className="font-medium">Heslo:</span> .Nbu123?
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2 hover:bg-blue-100 dark:hover:bg-blue-900/20"
-                        onClick={() => handleCopy(".Nbu123?", "password")}
-                      >
-                        {copiedField === "password" ? (
-                          <Check className="h-3.5 w-3.5 text-green-600" />
-                        ) : (
-                          <Copy className="h-3.5 w-3.5" />
-                        )}
-                      </Button>
-                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-9 w-9 shrink-0 hover:bg-primary/10"
+                      onClick={() => handleCopy("jankouctovnik@gmail.com", "email")}
+                    >
+                      {copiedField === "email" ? (
+                        <Check className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
                   </div>
-                </AlertDescription>
-              </Alert>
+                  <div className="flex items-start justify-between gap-3 p-3 bg-background rounded-lg border">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs text-muted-foreground mb-1">Heslo</div>
+                      <div className="font-mono text-sm md:text-base">.Nbu123?</div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-9 w-9 shrink-0 hover:bg-primary/10"
+                      onClick={() => handleCopy(".Nbu123?", "password")}
+                    >
+                      {copiedField === "password" ? (
+                        <Check className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </AlertDescription>
+            </Alert>
 
+            <form onSubmit={handleLogin} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="email">E-mail</Label>
+                <Label htmlFor="email" className="text-base font-medium">
+                  E-mail
+                </Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Mail className="absolute left-4 top-4 h-5 w-5 text-muted-foreground" />
                   <Input
                     id="email"
                     type="email"
                     placeholder="Zadajte váš e-mail"
-                    className="pl-10"
+                    className="pl-12 h-14 text-base"
                     value={loginData.email}
                     onChange={(e) => setLoginData((prev) => ({ ...prev, email: e.target.value }))}
                     required
@@ -271,14 +277,16 @@ export function LoginForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Heslo</Label>
+                <Label htmlFor="password" className="text-base font-medium">
+                  Heslo
+                </Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Lock className="absolute left-4 top-4 h-5 w-5 text-muted-foreground" />
                   <Input
                     id="password"
                     type="password"
                     placeholder="Zadajte vaše heslo"
-                    className="pl-10"
+                    className="pl-12 h-14 text-base"
                     value={loginData.password}
                     onChange={(e) => setLoginData((prev) => ({ ...prev, password: e.target.value }))}
                     required
@@ -287,92 +295,97 @@ export function LoginForm() {
               </div>
 
               {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
+                <Alert variant="destructive" className="border-2">
+                  <AlertDescription className="text-sm md:text-base">{error}</AlertDescription>
                 </Alert>
               )}
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Prihlásiť sa
+              <Button type="submit" className="w-full h-14 text-base md:text-lg font-semibold" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Prihlasujem...
+                  </>
+                ) : (
+                  "Prihlásiť sa"
+                )}
               </Button>
             </form>
           </TabsContent>
 
-          <TabsContent value="register">
-            <form onSubmit={handleRegistration} className="space-y-4">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Informácie o organizácii</Label>
-                  <div className="space-y-3">
-                    <div className="relative">
-                      <Building className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Názov organizácie *"
-                        className="pl-10"
-                        value={registrationData.organizationName}
-                        onChange={(e) => setRegistrationData((prev) => ({ ...prev, organizationName: e.target.value }))}
-                        required
-                      />
-                    </div>
-                  </div>
+          <TabsContent value="register" className="space-y-6 mt-6">
+            <form onSubmit={handleRegistration} className="space-y-5">
+              <div className="space-y-2">
+                <Label className="text-base font-medium">Názov organizácie</Label>
+                <div className="relative">
+                  <Building className="absolute left-4 top-4 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    placeholder="Zadajte názov organizácie *"
+                    className="pl-12 h-14 text-base"
+                    value={registrationData.organizationName}
+                    onChange={(e) => setRegistrationData((prev) => ({ ...prev, organizationName: e.target.value }))}
+                    required
+                  />
                 </div>
+              </div>
 
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Peppol identifikátor (DIČO)</Label>
-                  <div className="space-y-2">
-                    <Input
-                      placeholder="Hodnota DIČO (presne 10 číslic) *"
-                      value={registrationData.identifier}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, "").slice(0, 10)
-                        setRegistrationData((prev) => ({ ...prev, identifier: value }))
-                      }}
-                      maxLength={10}
-                      pattern="\d{10}"
-                      required
-                    />
-                    {registrationData.identifier && registrationData.identifier.length !== 10 && (
-                      <div className="text-sm text-destructive">
-                        DIČO musí mať presne 10 číslic (aktuálne {registrationData.identifier.length})
-                      </div>
-                    )}
+              <div className="space-y-2">
+                <Label className="text-base font-medium">Peppol identifikátor (DIČO)</Label>
+                <Input
+                  placeholder="Presne 10 číslic *"
+                  className="h-14 text-base font-mono"
+                  value={registrationData.identifier}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, "").slice(0, 10)
+                    setRegistrationData((prev) => ({ ...prev, identifier: value }))
+                  }}
+                  maxLength={10}
+                  pattern="\d{10}"
+                  required
+                />
+                {registrationData.identifier && registrationData.identifier.length !== 10 && (
+                  <div className="text-sm text-destructive font-medium">
+                    DIČO musí mať presne 10 číslic (aktuálne {registrationData.identifier.length})
                   </div>
-                </div>
+                )}
+              </div>
 
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">E-mail</Label>
-                  <div className="space-y-3">
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type="email"
-                        placeholder="E-mailová adresa *"
-                        className="pl-10"
-                        value={registrationData.email}
-                        onChange={(e) => setRegistrationData((prev) => ({ ...prev, email: e.target.value }))}
-                        required
-                      />
-                    </div>
-                  </div>
+              <div className="space-y-2">
+                <Label className="text-base font-medium">E-mail</Label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-4 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    type="email"
+                    placeholder="Zadajte e-mailovú adresu *"
+                    className="pl-12 h-14 text-base"
+                    value={registrationData.email}
+                    onChange={(e) => setRegistrationData((prev) => ({ ...prev, email: e.target.value }))}
+                    required
+                  />
                 </div>
               </div>
 
               {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
+                <Alert variant="destructive" className="border-2">
+                  <AlertDescription className="text-sm md:text-base">{error}</AlertDescription>
                 </Alert>
               )}
 
               {success && (
-                <Alert className="border-accent text-accent-foreground bg-accent/10">
-                  <AlertDescription>{success}</AlertDescription>
+                <Alert className="border-2 border-accent bg-accent/10">
+                  <AlertDescription className="text-sm md:text-base">{success}</AlertDescription>
                 </Alert>
               )}
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Vytvoriť účet
+              <Button type="submit" className="w-full h-14 text-base md:text-lg font-semibold" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Vytváram účet...
+                  </>
+                ) : (
+                  "Vytvoriť účet"
+                )}
               </Button>
             </form>
           </TabsContent>
