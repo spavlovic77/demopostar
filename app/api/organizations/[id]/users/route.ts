@@ -5,28 +5,17 @@ const ADMIN_TOKEN = "adba439948539073c0bdb9873206ea8bc34999fc"
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const authHeader = request.headers.get("authorization")
-
-    if (!authHeader) {
-      return NextResponse.json({ error: "Authorization required" }, { status: 401 })
-    }
-
     const organizationId = params.id
 
     const response = await fetch(`${ION_AP_BASE_URL}/organizations/${organizationId}/users`, {
       headers: {
-        Authorization: authHeader,
+        Authorization: `Token ${ADMIN_TOKEN}`,
       },
     })
 
     if (!response.ok) {
       const errorText = await response.text()
       console.error("[v0] ion-AP users fetch failed:", response.status, errorText)
-
-      if (response.status === 404) {
-        return NextResponse.json({ results: [], detail: "Organization not found or no access" })
-      }
-
       return NextResponse.json({ error: "Failed to fetch users", detail: errorText }, { status: response.status })
     }
 
