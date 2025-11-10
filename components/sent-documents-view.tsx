@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
   RefreshCw,
   Download,
@@ -260,27 +259,56 @@ export function SentDocumentsView({ organizations }: SentDocumentsViewProps) {
     return new Date(dateString).toLocaleString()
   }
 
+  const formatRelativeDate = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffTime = Math.abs(now.getTime() - date.getTime())
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+
+    if (diffDays === 0) return "Dnes"
+    if (diffDays === 1) return "Včera"
+    if (diffDays === 2) return "Pred 2 dňami"
+    if (diffDays < 7) return `Pred ${diffDays} dňami`
+    if (diffDays < 14) return "Pred týždňom"
+    if (diffDays < 30) return `Pred ${Math.floor(diffDays / 7)} týždňami`
+    if (diffDays < 60) return "Pred mesiacom"
+    return `Pred ${Math.floor(diffDays / 30)} mesiacmi`
+  }
+
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString("sk-SK", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
+
   const getStatusBadge = (state: string) => {
     const stateLower = state.toLowerCase()
     if (stateLower === "sent" || stateLower === "delivered" || stateLower === "completed") {
       return (
-        <Badge variant="secondary" className="flex items-center gap-1">
+        <Badge
+          variant="secondary"
+          className="flex items-center gap-1 bg-green-500/10 text-green-700 dark:text-green-400"
+        >
           <CheckCircle className="h-3 w-3" />
-          Delivered
+          <span className="hidden sm:inline">Doručené</span>
         </Badge>
       )
     } else if (stateLower === "failed" || stateLower === "error") {
       return (
         <Badge variant="destructive" className="flex items-center gap-1">
           <AlertCircle className="h-3 w-3" />
-          Failed
+          <span className="hidden sm:inline">Zlyhalo</span>
         </Badge>
       )
     } else {
       return (
         <Badge variant="outline" className="flex items-center gap-1">
           <Clock className="h-3 w-3" />
-          Pending
+          <span className="hidden sm:inline">Prebieha</span>
         </Badge>
       )
     }
@@ -307,12 +335,12 @@ export function SentDocumentsView({ organizations }: SentDocumentsViewProps) {
   const endItem = Math.min(currentPage * itemsPerPage, totalCount)
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-foreground">Sent</h1>
+    <div className="space-y-4 lg:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Odoslané faktúry</h1>
         <Button variant="outline" size="sm" onClick={() => fetchTransactions(currentPage)} disabled={loading}>
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-          Refresh
+          <span className="hidden sm:inline">Obnoviť</span>
         </Button>
       </div>
 
@@ -323,88 +351,109 @@ export function SentDocumentsView({ organizations }: SentDocumentsViewProps) {
       )}
 
       {loading ? (
-        <div className="text-center py-12">
+        <div className="text-center py-12 lg:py-16">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading documents...</p>
+          <p className="text-sm lg:text-base text-muted-foreground">Načítavam dokumenty...</p>
         </div>
       ) : transactions.length === 0 ? (
-        <div className="text-center py-12">
-          <Send className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">No documents sent</h3>
-          <p className="text-muted-foreground">Documents you send will be tracked here</p>
+        <div className="text-center py-12 lg:py-16">
+          <Send className="mx-auto h-10 w-10 lg:h-12 lg:w-12 text-muted-foreground mb-4" />
+          <h3 className="text-base lg:text-lg font-medium text-foreground mb-2">Žiadne odoslané dokumenty</h3>
+          <p className="text-sm text-muted-foreground">Dokumenty, ktoré odošlete, sa zobrazia tu</p>
         </div>
       ) : (
         <>
-          <div className="border rounded-lg">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>To</TableHead>
-                  <TableHead>Sent date</TableHead>
-                  <TableHead>PDF version</TableHead>
-                  <TableHead>Download</TableHead>
-                  <TableHead>Receipt</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {transactions.map((transaction) => (
-                  <TableRow key={transaction.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <Send className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <div className="font-medium">
+          <div className="space-y-3 lg:space-y-4">
+            {transactions.map((transaction) => {
+              const stateLower = transaction.state.toLowerCase()
+              const isDelivered = stateLower === "sent" || stateLower === "delivered" || stateLower === "completed"
+              const isFailed = stateLower === "failed" || stateLower === "error"
+
+              return (
+                <div
+                  key={transaction.id}
+                  className={`
+                    group relative rounded-lg border transition-all hover:shadow-md
+                    ${isDelivered ? "bg-card" : isFailed ? "bg-destructive/5 border-destructive/20" : "bg-card"}
+                  `}
+                >
+                  <div className="p-4 lg:p-6">
+                    <div className="flex items-start justify-between gap-4 mb-3 lg:mb-4">
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <div className="mt-1">
+                          <Send className="h-5 w-5 lg:h-6 lg:w-6 text-muted-foreground shrink-0" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-base lg:text-lg text-foreground truncate">
                             {receiverNames[transaction.receiver_identifier] || transaction.receiver_identifier}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {transaction.document_id || `Transaction #${transaction.id}`}
-                          </div>
+                          </h3>
+                          <p className="text-xs lg:text-sm text-muted-foreground truncate">
+                            {transaction.document_id || `Transakcia #${transaction.id}`}
+                          </p>
                         </div>
                       </div>
-                    </TableCell>
-                    <TableCell>{formatDate(transaction.created_on)}</TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => handleViewPDF(transaction.id)}>
+                      <div className="text-right shrink-0">
+                        <p className="text-sm lg:text-base font-medium text-foreground">
+                          {formatRelativeDate(transaction.created_on)}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{formatTime(transaction.created_on)}</p>
+                      </div>
+                    </div>
+
+                    <div className="mb-3">{getStatusBadge(transaction.state)}</div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewPDF(transaction.id)}
+                        className="flex-1 sm:flex-none"
+                      >
                         <FileText className="h-4 w-4 mr-2" />
-                        View PDF
+                        <span className="hidden sm:inline">Zobraziť PDF</span>
+                        <span className="sm:hidden">PDF</span>
                       </Button>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => handleDownloadXML(transaction.id)}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDownloadXML(transaction.id)}
+                        className="flex-1 sm:flex-none"
+                      >
                         <Download className="h-4 w-4 mr-2" />
                         XML
                       </Button>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getStatusBadge(transaction.state)}
-                        <Button variant="ghost" size="sm" onClick={() => handleViewReceipt(transaction.id)}>
-                          <Download className="h-4 w-4 mr-2" />
-                          Receipt
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleViewReceipt(transaction.id)}
+                        className="flex-1 sm:flex-none"
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        <span className="hidden sm:inline">Potvrdenie</span>
+                        <span className="sm:hidden">MDN</span>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
           </div>
 
           {totalCount > itemsPerPage && (
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-muted-foreground">
-                Showing {startItem} to {endItem} of {totalCount} documents
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2">
+              <div className="text-xs lg:text-sm text-muted-foreground text-center sm:text-left">
+                Zobrazujem {startItem} až {endItem} z {totalCount} dokumentov
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center gap-2">
                 <Button variant="outline" size="sm" onClick={handlePreviousPage} disabled={!hasPrevious || loading}>
                   <ChevronLeft className="h-4 w-4 mr-1" />
-                  Previous
+                  <span className="hidden sm:inline">Predošlá</span>
                 </Button>
-                <div className="text-sm text-muted-foreground">
-                  Page {currentPage} of {totalPages}
+                <div className="text-xs lg:text-sm text-muted-foreground px-2">
+                  Strana {currentPage} z {totalPages}
                 </div>
                 <Button variant="outline" size="sm" onClick={handleNextPage} disabled={!hasNext || loading}>
-                  Next
+                  <span className="hidden sm:inline">Ďalšia</span>
                   <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               </div>

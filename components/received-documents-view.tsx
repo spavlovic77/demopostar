@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { RefreshCw, Download, FileText, Mail, MailOpen, ChevronLeft, ChevronRight } from "lucide-react"
 import { AuthService } from "@/lib/auth"
 
@@ -277,16 +276,44 @@ export function ReceivedDocumentsView({ organizationIdentifier, organizations = 
     return senderIdentifier
   }
 
+  const formatRelativeDate = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffTime = Math.abs(now.getTime() - date.getTime())
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+
+    if (diffDays === 0) return "Dnes"
+    if (diffDays === 1) return "Včera"
+    if (diffDays === 2) return "Pred 2 dňami"
+    if (diffDays < 7) return `Pred ${diffDays} dňami`
+    if (diffDays < 14) return "Pred týždňom"
+    if (diffDays < 30) return `Pred ${Math.floor(diffDays / 7)} týždňami`
+    if (diffDays < 60) return "Pred mesiacom"
+    return `Pred ${Math.floor(diffDays / 30)} mesiacmi`
+  }
+
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString("sk-SK", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 lg:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Received</h1>
-          {organizationIdentifier && <p className="text-sm text-muted-foreground mt-1">Filtered by organization</p>}
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Prijaté faktúry</h1>
+          {organizationIdentifier && (
+            <p className="text-xs lg:text-sm text-muted-foreground mt-1">Filtrované podľa organizácie</p>
+          )}
         </div>
         <Button variant="outline" size="sm" onClick={() => fetchTransactions(currentPage)} disabled={loading}>
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-          Refresh
+          <span className="hidden sm:inline">Obnoviť</span>
         </Button>
       </div>
 
@@ -297,101 +324,119 @@ export function ReceivedDocumentsView({ organizationIdentifier, organizations = 
       )}
 
       {loading ? (
-        <div className="text-center py-12">
+        <div className="text-center py-12 lg:py-16">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading documents...</p>
+          <p className="text-sm lg:text-base text-muted-foreground">Načítavam dokumenty...</p>
         </div>
       ) : transactions.length === 0 ? (
-        <div className="text-center py-12">
-          <Mail className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">No documents received</h3>
-          <p className="text-muted-foreground">
+        <div className="text-center py-12 lg:py-16">
+          <Mail className="mx-auto h-10 w-10 lg:h-12 lg:w-12 text-muted-foreground mb-4" />
+          <h3 className="text-base lg:text-lg font-medium text-foreground mb-2">Žiadne prijaté dokumenty</h3>
+          <p className="text-sm text-muted-foreground">
             {organizationIdentifier
-              ? "No documents from this organization"
-              : "Documents sent to your organization will appear here"}
+              ? "Žiadne dokumenty od tejto organizácie"
+              : "Dokumenty zaslané do vašej organizácie sa zobrazia tu"}
           </p>
         </div>
       ) : (
         <>
-          <div className="border rounded-lg">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>From</TableHead>
-                  <TableHead>Received date</TableHead>
-                  <TableHead>PDF version</TableHead>
-                  <TableHead>Download</TableHead>
-                  <TableHead>Read</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {transactions.map((transaction) => (
-                  <TableRow key={transaction.id} className={isRead(transaction.state) ? "" : "bg-muted/50"}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        {isRead(transaction.state) ? (
-                          <MailOpen className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <Mail className="h-4 w-4 text-primary" />
-                        )}
-                        <div>
-                          <div className="font-medium">{getSenderName(transaction.sender_identifier)}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {transaction.document_id || `Transaction #${transaction.id}`}
-                          </div>
+          <div className="space-y-3 lg:space-y-4">
+            {transactions.map((transaction) => {
+              const read = isRead(transaction.state)
+              return (
+                <div
+                  key={transaction.id}
+                  className={`
+                    group relative rounded-lg border transition-all hover:shadow-md
+                    ${read ? "bg-card" : "bg-primary/5 border-primary/20"}
+                  `}
+                >
+                  <div className="p-4 lg:p-6">
+                    {/* Header row with sender and date */}
+                    <div className="flex items-start justify-between gap-4 mb-3 lg:mb-4">
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <div className="mt-1">
+                          {read ? (
+                            <MailOpen className="h-5 w-5 lg:h-6 lg:w-6 text-muted-foreground shrink-0" />
+                          ) : (
+                            <Mail className="h-5 w-5 lg:h-6 lg:w-6 text-primary shrink-0" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-base lg:text-lg text-foreground truncate">
+                            {getSenderName(transaction.sender_identifier)}
+                          </h3>
+                          <p className="text-xs lg:text-sm text-muted-foreground truncate">
+                            {transaction.document_id || `Transakcia #${transaction.id}`}
+                          </p>
                         </div>
                       </div>
-                    </TableCell>
-                    <TableCell>{formatDate(transaction.created_on)}</TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => handleViewPDF(transaction.id)}>
+                      <div className="text-right shrink-0">
+                        <p className="text-sm lg:text-base font-medium text-foreground">
+                          {formatRelativeDate(transaction.created_on)}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{formatTime(transaction.created_on)}</p>
+                      </div>
+                    </div>
+
+                    {/* Actions row */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewPDF(transaction.id)}
+                        className="flex-1 sm:flex-none"
+                      >
                         <FileText className="h-4 w-4 mr-2" />
-                        View PDF
+                        <span className="hidden sm:inline">Zobraziť PDF</span>
+                        <span className="sm:hidden">PDF</span>
                       </Button>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => handleDownloadXML(transaction.id)}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDownloadXML(transaction.id)}
+                        className="flex-1 sm:flex-none"
+                      >
                         <Download className="h-4 w-4 mr-2" />
                         XML
                       </Button>
-                    </TableCell>
-                    <TableCell>
                       <Button
-                        variant="ghost"
+                        variant={read ? "ghost" : "default"}
                         size="sm"
                         onClick={() => handleToggleRead(transaction.id, transaction.state)}
                         disabled={updatingRead === transaction.id}
+                        className="ml-auto"
                       >
                         {updatingRead === transaction.id ? (
                           <RefreshCw className="h-4 w-4 animate-spin" />
-                        ) : isRead(transaction.state) ? (
-                          <Badge variant="secondary">Read</Badge>
                         ) : (
-                          <Badge variant="default">Unread</Badge>
+                          <Badge variant={read ? "secondary" : "default"} className="pointer-events-none">
+                            {read ? "Prečítané" : "Nové"}
+                          </Badge>
                         )}
                       </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
           </div>
 
           {totalCount > itemsPerPage && (
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-muted-foreground">
-                Showing {startItem} to {endItem} of {totalCount} documents
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2">
+              <div className="text-xs lg:text-sm text-muted-foreground text-center sm:text-left">
+                Zobrazujem {startItem} až {endItem} z {totalCount} dokumentov
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center gap-2">
                 <Button variant="outline" size="sm" onClick={handlePreviousPage} disabled={!hasPrevious || loading}>
                   <ChevronLeft className="h-4 w-4 mr-1" />
-                  Previous
+                  <span className="hidden sm:inline">Predošlá</span>
                 </Button>
-                <div className="text-sm text-muted-foreground">
-                  Page {currentPage} of {totalPages}
+                <div className="text-xs lg:text-sm text-muted-foreground px-2">
+                  Strana {currentPage} z {totalPages}
                 </div>
                 <Button variant="outline" size="sm" onClick={handleNextPage} disabled={!hasNext || loading}>
-                  Next
+                  <span className="hidden sm:inline">Ďalšia</span>
                   <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               </div>
