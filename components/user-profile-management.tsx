@@ -472,11 +472,13 @@ export function UserProfileManagement() {
         <TabsContent value="organizations" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5" />
+              <CardTitle className="flex items-center gap-2 text-2xl">
+                <CheckCircle className="h-6 w-6" />
                 Organizácie, ku ktorým máte prístup
               </CardTitle>
-              <CardDescription>Zobrazenie detailov organizácií, ku ktorým patríte</CardDescription>
+              <CardDescription className="text-base">
+                Zobrazenie detailov organizácií, ku ktorým patríte
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {loadingOrganizations ? (
@@ -491,125 +493,154 @@ export function UserProfileManagement() {
                   <p className="text-muted-foreground">Zatiaľ nemáte prístup k žiadnym organizáciám</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {detailedOrganizations.map((org) => (
-                    <Card key={org.id} className="p-6">
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-xl font-semibold text-foreground">{org.name}</h3>
-                          <Dialog
-                            open={addUserDialogOpen[org.id] || false}
-                            onOpenChange={(open) => setAddUserDialogOpen({ ...addUserDialogOpen, [org.id]: open })}
-                          >
-                            <DialogTrigger asChild>
-                              <Button size="sm">
-                                <UserPlus className="h-4 w-4 mr-2" />
-                                Pridať používateľa
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Pridať nového používateľa</DialogTitle>
-                                <DialogDescription>
-                                  Pridajte nového používateľa do organizácie <strong>{org.name}</strong>. Získa prístup
-                                  k tejto organizácii.
-                                </DialogDescription>
-                              </DialogHeader>
-                              <form onSubmit={(e) => handleAddUser(org.id, e)}>
-                                <div className="space-y-4 py-4">
-                                  <div className="space-y-2">
-                                    <Label htmlFor={`email-${org.id}`}>E-mail</Label>
-                                    <Input
-                                      id={`email-${org.id}`}
-                                      type="email"
-                                      placeholder="pouzivatel@priklad.sk"
-                                      value={newUserEmail[org.id] || ""}
-                                      onChange={(e) => setNewUserEmail({ ...newUserEmail, [org.id]: e.target.value })}
-                                      required
-                                    />
-                                  </div>
-                                </div>
-                                <DialogFooter>
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => setAddUserDialogOpen({ ...addUserDialogOpen, [org.id]: false })}
-                                  >
-                                    Zrušiť
-                                  </Button>
-                                  <Button type="submit" disabled={isUpdating}>
-                                    {isUpdating ? (
-                                      <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Pridávam...
-                                      </>
-                                    ) : (
-                                      "Pridať používateľa"
-                                    )}
-                                  </Button>
-                                </DialogFooter>
-                              </form>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-
-                        {org.identifiers && org.identifiers.length > 0 && (
-                          <div>
-                            <p className="text-sm font-medium text-muted-foreground mb-2">Identifikátory</p>
-                            <div className="space-y-2">
-                              {org.identifiers.map((identifier) => {
-                                const parseIdentifier = (fullIdentifier: string) => {
-                                  const parts = fullIdentifier.split(":")
-                                  return parts.length > 1 ? parts.slice(1).join(":") : fullIdentifier
-                                }
-
-                                const parsedIdentifier = parseIdentifier(identifier.identifier)
-
-                                return (
-                                  <div key={identifier.id} className="p-3 bg-muted/50 rounded-lg">
-                                    <p className="font-mono text-sm text-foreground">{parsedIdentifier}</p>
-                                  </div>
-                                )
-                              })}
+                    <Card key={org.id} className="border-2 shadow-sm hover:shadow-md transition-shadow">
+                      <CardContent className="p-8">
+                        <div className="space-y-6">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1">
+                              <h3 className="text-2xl font-bold text-foreground mb-1">{org.name}</h3>
+                              <p className="text-base text-muted-foreground">ID: {org.id}</p>
                             </div>
+                            <Dialog
+                              open={addUserDialogOpen[org.id] || false}
+                              onOpenChange={(open) => setAddUserDialogOpen({ ...addUserDialogOpen, [org.id]: open })}
+                            >
+                              <DialogTrigger asChild>
+                                <Button size="lg" className="font-medium">
+                                  <UserPlus className="h-5 w-5 mr-2" />
+                                  Pridať používateľa
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Pridať nového používateľa</DialogTitle>
+                                  <DialogDescription>
+                                    Pridajte nového používateľa do organizácie <strong>{org.name}</strong>. Získa
+                                    prístup k tejto organizácii.
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <form onSubmit={(e) => handleAddUser(org.id, e)}>
+                                  <div className="space-y-4 py-4">
+                                    <div className="space-y-2">
+                                      <Label htmlFor={`email-${org.id}`}>E-mail</Label>
+                                      <Input
+                                        id={`email-${org.id}`}
+                                        type="email"
+                                        placeholder="pouzivatel@priklad.sk"
+                                        value={newUserEmail[org.id] || ""}
+                                        onChange={(e) => setNewUserEmail({ ...newUserEmail, [org.id]: e.target.value })}
+                                        required
+                                      />
+                                    </div>
+                                  </div>
+                                  <DialogFooter>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      onClick={() => setAddUserDialogOpen({ ...addUserDialogOpen, [org.id]: false })}
+                                    >
+                                      Zrušiť
+                                    </Button>
+                                    <Button type="submit" disabled={isUpdating}>
+                                      {isUpdating ? (
+                                        <>
+                                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                          Pridávam...
+                                        </>
+                                      ) : (
+                                        "Pridať používateľa"
+                                      )}
+                                    </Button>
+                                  </DialogFooter>
+                                </form>
+                              </DialogContent>
+                            </Dialog>
                           </div>
-                        )}
 
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground mb-2">Používatelia</p>
-                          {loadingUsers[org.id] ? (
-                            <div className="text-center py-4">
-                              <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
+                          {org.identifiers && org.identifiers.length > 0 && (
+                            <div className="border-t pt-6">
+                              <div className="flex items-center gap-2 mb-4">
+                                <div className="h-8 w-1 bg-primary rounded-full" />
+                                <h4 className="text-lg font-semibold text-foreground">Peppol ID</h4>
+                              </div>
+                              <div className="space-y-3">
+                                {org.identifiers.map((identifier) => {
+                                  const parseIdentifier = (fullIdentifier: string) => {
+                                    const parts = fullIdentifier.split(":")
+                                    return parts.length > 1 ? parts.slice(1).join(":") : fullIdentifier
+                                  }
+
+                                  const parsedIdentifier = parseIdentifier(identifier.identifier)
+
+                                  return (
+                                    <div
+                                      key={identifier.id}
+                                      className="p-4 bg-primary/5 border border-primary/20 rounded-lg"
+                                    >
+                                      <p className="font-mono text-lg font-medium text-foreground">
+                                        {parsedIdentifier}
+                                      </p>
+                                    </div>
+                                  )
+                                })}
+                              </div>
                             </div>
-                          ) : organizationUsers[org.id] && organizationUsers[org.id].length > 0 ? (
-                            <div className="space-y-2">
-                              {organizationUsers[org.id].map((user) => (
-                                <div
-                                  key={user.id}
-                                  className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <p className="text-sm text-foreground">{user.email}</p>
-                                    {user.email_verified && (
-                                      <CheckCircle className="h-4 w-4 text-green-600" title="Email verified" />
-                                    )}
-                                  </div>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleRemoveUser(org.id, user.id, user.email)}
-                                    disabled={isUpdating}
-                                  >
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                  </Button>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-sm text-muted-foreground italic">Žiadni používatelia</p>
                           )}
+
+                          <div className="border-t pt-6">
+                            <div className="flex items-center gap-2 mb-4">
+                              <div className="h-8 w-1 bg-primary rounded-full" />
+                              <h4 className="text-lg font-semibold text-foreground">Používatelia</h4>
+                            </div>
+                            {loadingUsers[org.id] ? (
+                              <div className="text-center py-6">
+                                <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
+                              </div>
+                            ) : organizationUsers[org.id] && organizationUsers[org.id].length > 0 ? (
+                              <div className="space-y-3">
+                                {organizationUsers[org.id].map((user) => (
+                                  <div
+                                    key={user.id}
+                                    className="flex items-center justify-between p-4 bg-muted/50 border border-muted rounded-lg hover:bg-muted/70 transition-colors"
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                        <span className="text-primary font-semibold text-base">
+                                          {user.email.charAt(0).toUpperCase()}
+                                        </span>
+                                      </div>
+                                      <div>
+                                        <p className="text-base font-medium text-foreground">{user.email}</p>
+                                        {user.email_verified && (
+                                          <div className="flex items-center gap-1 mt-0.5">
+                                            <CheckCircle className="h-3.5 w-3.5 text-green-600" />
+                                            <span className="text-xs text-green-600 font-medium">Overený</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleRemoveUser(org.id, user.id, user.email)}
+                                      disabled={isUpdating}
+                                      className="hover:bg-destructive/10"
+                                    >
+                                      <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="text-center py-6 px-4 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/30">
+                                <p className="text-base text-muted-foreground">Žiadni používatelia</p>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
+                      </CardContent>
                     </Card>
                   ))}
                 </div>
