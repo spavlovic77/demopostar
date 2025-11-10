@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Upload, FileText, CheckCircle, AlertCircle, X, Send, Loader2, FileCheck, Euro } from "lucide-react"
 import { AuthService } from "@/lib/auth"
+import { useAppContext } from "@/lib/app-context"
 
 interface SendDocumentResponse {
   id: number
@@ -70,6 +71,8 @@ function SimpleStatusTracker({ steps }: { steps: StatusStep[] }) {
 }
 
 export function SendDocumentForm() {
+  const { refreshWalletBalance } = useAppContext()
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState("")
@@ -122,7 +125,7 @@ export function SendDocumentForm() {
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${tokens.access}`,
-              "X-Refresh-Token": tokens.refresh, // Added refresh token header
+              "X-Refresh-Token": tokens.refresh,
             },
             body: JSON.stringify({
               transactionId: success.wallet_transaction_id,
@@ -146,13 +149,12 @@ export function SendDocumentForm() {
                 setIsPolling(false)
                 clearInterval(pollInterval)
                 await loadWalletBalance()
+                await refreshWalletBalance()
               }
             }
           } else if (response.status === 401) {
-            console.log("[v0] Polling failed with 401, attempting token refresh...")
             const newTokens = await AuthService.refreshToken()
             if (!newTokens) {
-              console.error("[v0] Token refresh failed, stopping polling")
               setIsPolling(false)
               clearInterval(pollInterval)
               setError("Authentication expired. Please refresh the page.")
@@ -168,7 +170,7 @@ export function SendDocumentForm() {
         setIsPolling(false)
       }
     }
-  }, [success, documentState])
+  }, [success, documentState, refreshWalletBalance])
 
   const updateStatusSteps = (state: string, fundsReserved = false) => {
     const steps: StatusStep[] = [
@@ -416,7 +418,7 @@ export function SendDocumentForm() {
         headers: {
           "Content-Type": "application/xml",
           Authorization: `Bearer ${tokens.access}`,
-          "X-Refresh-Token": tokens.refresh, // Added refresh token header
+          "X-Refresh-Token": tokens.refresh,
         },
         body: fileContent,
       })
@@ -468,6 +470,7 @@ export function SendDocumentForm() {
         updateStatusSteps(data.state, true)
 
         await loadWalletBalance()
+        await refreshWalletBalance()
       }
 
       setSelectedFile(null)
