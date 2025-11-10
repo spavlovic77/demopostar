@@ -361,15 +361,31 @@ export function UserProfileManagement() {
     setError("")
 
     try {
-      const response = await fetch(`/api/organizations/${orgId}/users`)
+      const tokens = AuthService.getTokens()
+      if (!tokens) {
+        throw new Error("Authentication required")
+      }
+
+      const response = await fetch(`/api/organizations/${orgId}/users`, {
+        headers: {
+          Authorization: `Bearer ${tokens.access}`,
+        },
+      })
 
       if (!response.ok) {
-        throw new Error("Failed to load organization users")
+        const errorData = await response.json()
+        if (response.status === 404) {
+          console.log("[v0] Organization not found or no access, showing empty list")
+          setOrgUsers([])
+          return
+        }
+        throw new Error(errorData.error || "Failed to load organization users")
       }
 
       const data = await response.json()
       setOrgUsers(data.results || [])
     } catch (err) {
+      console.error("[v0] Error loading users:", err)
       setError(err instanceof Error ? err.message : "Failed to load users")
       setOrgUsers([])
     } finally {
