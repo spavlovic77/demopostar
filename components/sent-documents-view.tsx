@@ -224,10 +224,16 @@ export function SentDocumentsView({ organizations }: SentDocumentsViewProps) {
       if (response.ok) {
         const blob = await response.blob()
         const url = window.URL.createObjectURL(blob)
-        window.open(url, "_blank")
+        const a = document.createElement("a")
+        a.href = url
+        a.download = `invoice-${id}.pdf`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        window.URL.revokeObjectURL(url)
       }
     } catch (err) {
-      console.error("Failed to view PDF:", err)
+      console.error("Failed to download PDF:", err)
     }
   }
 
