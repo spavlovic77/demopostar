@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Mail, Lock, Building, Copy, Check } from "lucide-react"
+import { Loader2, Mail, Lock, Building, Copy, Check, Github } from "lucide-react"
 
 interface LoginData {
   email: string
@@ -311,6 +311,18 @@ export function LoginForm() {
                 )}
               </Button>
             </form>
+
+            <div className="mt-6 pt-6 border-t">
+              <a
+                href="https://github.com/spavlovic77/demopostar"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors group"
+              >
+                <Github className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                <span className="font-medium">Zobraziť na GitHub</span>
+              </a>
+            </div>
           </TabsContent>
 
           <TabsContent value="register" className="space-y-6 mt-6">
