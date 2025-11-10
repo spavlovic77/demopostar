@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Mail, Lock, Building } from "lucide-react"
+import { Loader2, Mail, Lock, Building, Copy, Check } from "lucide-react"
 
 interface LoginData {
   email: string
@@ -30,6 +30,7 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
+  const [copiedField, setCopiedField] = useState<"email" | "password" | null>(null)
   const [loginData, setLoginData] = useState<LoginData>({
     email: "",
     password: "",
@@ -286,6 +287,16 @@ export function LoginForm() {
     }
   }
 
+  const handleCopy = async (text: string, field: "email" | "password") => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedField(field)
+      setTimeout(() => setCopiedField(null), 2000)
+    } catch (err) {
+      console.error("[v0] Failed to copy:", err)
+    }
+  }
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -303,18 +314,47 @@ export function LoginForm() {
             <form onSubmit={handleLogin} className="space-y-4">
               <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950/20">
                 <AlertDescription className="text-sm">
-                  <div className="font-semibold mb-1">Demo prihlasovacie údaje:</div>
-                  <div className="space-y-1 text-xs">
-                    <div>
-                      <span className="font-medium">E-mail:</span> jankouctovnik@gmail.com
+                  <div className="font-semibold mb-2">Demo prihlasovacie údaje:</div>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <span className="font-medium">E-mail:</span> jankouctovnik@gmail.com
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 hover:bg-blue-100 dark:hover:bg-blue-900/20"
+                        onClick={() => handleCopy("jankouctovnik@gmail.com", "email")}
+                      >
+                        {copiedField === "email" ? (
+                          <Check className="h-3.5 w-3.5 text-green-600" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
                     </div>
-                    <div>
-                      <span className="font-medium">Heslo:</span> .Nbu123?
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <span className="font-medium">Heslo:</span> .Nbu123?
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 hover:bg-blue-100 dark:hover:bg-blue-900/20"
+                        onClick={() => handleCopy(".Nbu123?", "password")}
+                      >
+                        {copiedField === "password" ? (
+                          <Check className="h-3.5 w-3.5 text-green-600" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
                     </div>
                   </div>
                 </AlertDescription>
               </Alert>
-              {/* </CHANGE> */}
 
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail</Label>

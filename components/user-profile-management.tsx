@@ -7,22 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  Lock,
-  CheckCircle,
-  AlertCircle,
-  Key,
-  Shield,
-  Loader2,
-  Save,
-  RefreshCw,
-  UserPlus,
-  Trash2,
-  Users,
-} from "lucide-react"
+import { Lock, CheckCircle, AlertCircle, Key, Shield, Loader2, Save, RefreshCw, UserPlus } from "lucide-react"
 import { AuthService, type UserData } from "@/lib/auth"
 import {
   Dialog,
@@ -33,16 +20,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 
 interface ApiToken {
   key: string
@@ -111,15 +88,8 @@ export function UserProfileManagement() {
     confirmPassword: "",
   })
   const [organizations, setOrganizations] = useState<Organization[]>([])
-  const [selectedOrgId, setSelectedOrgId] = useState<number | null>(null)
-  const [orgUsers, setOrgUsers] = useState<OrganizationUser[]>([])
-  const [loadingUsers, setLoadingUsers] = useState(false)
-  const [addUserDialogOpen, setAddUserDialogOpen] = useState(false)
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [userToDelete, setUserToDelete] = useState<OrganizationUser | null>(null)
-  const [newUserData, setNewUserData] = useState({
-    email: "",
-  })
+  const [addUserDialogOpen, setAddUserDialogOpen] = useState<{ [key: number]: boolean }>({})
+  const [newUserEmail, setNewUserEmail] = useState<{ [key: number]: string }>({})
   const [detailedOrganizations, setDetailedOrganizations] = useState<OrganizationDetails[]>([])
   const [loadingOrganizations, setLoadingOrganizations] = useState(false)
 
@@ -170,10 +140,6 @@ export function UserProfileManagement() {
       const orgIds = orgs.map((org: any) => org.id)
 
       setOrganizationData(orgNames)
-
-      if (orgIds.length > 0) {
-        setSelectedOrgId(orgIds[0])
-      }
 
       // Fetch Peppol identifiers for the first organization
       if (orgIds.length > 0) {
@@ -356,48 +322,22 @@ export function UserProfileManagement() {
     }
   }
 
-  const loadOrganizationUsers = async (orgId: number) => {
-    setLoadingUsers(true)
-    setError("")
-
-    try {
-      const response = await fetch(`/api/organizations/${orgId}/users`)
-
-      if (!response.ok) {
-        throw new Error("Failed to load organization users")
-      }
-
-      const data = await response.json()
-      setOrgUsers(data.results || [])
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load users")
-      setOrgUsers([])
-    } finally {
-      setLoadingUsers(false)
-    }
-  }
-
-  useEffect(() => {
-    if (selectedOrgId) {
-      loadOrganizationUsers(selectedOrgId)
-    }
-  }, [selectedOrgId])
-
-  const handleAddUser = async (e: React.FormEvent) => {
+  const handleAddUser = async (orgId: number, e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedOrgId) return
 
     setIsUpdating(true)
     setError("")
     setSuccess("")
 
     try {
-      const response = await fetch(`/api/organizations/${selectedOrgId}/users`, {
+      const response = await fetch(`/api/organizations/${orgId}/users`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(newUserData),
+        body: JSON.stringify({
+          email: newUserEmail[orgId] || "",
+        }),
       })
 
       if (!response.ok) {
@@ -406,44 +346,10 @@ export function UserProfileManagement() {
       }
 
       setSuccess("User added successfully")
-      setAddUserDialogOpen(false)
-      setNewUserData({
-        email: "",
-      })
-
-      // Reload users list
-      await loadOrganizationUsers(selectedOrgId)
+      setAddUserDialogOpen({ ...addUserDialogOpen, [orgId]: false })
+      setNewUserEmail({ ...newUserEmail, [orgId]: "" })
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to add user")
-    } finally {
-      setIsUpdating(false)
-    }
-  }
-
-  const handleDeleteUser = async () => {
-    if (!selectedOrgId || !userToDelete) return
-
-    setIsUpdating(true)
-    setError("")
-    setSuccess("")
-
-    try {
-      const response = await fetch(`/api/organizations/${selectedOrgId}/users/${userToDelete.id}`, {
-        method: "DELETE",
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to delete user")
-      }
-
-      setSuccess("User removed successfully")
-      setDeleteDialogOpen(false)
-      setUserToDelete(null)
-
-      // Reload users list
-      await loadOrganizationUsers(selectedOrgId)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete user")
     } finally {
       setIsUpdating(false)
     }
@@ -524,8 +430,62 @@ export function UserProfileManagement() {
                   {detailedOrganizations.map((org) => (
                     <Card key={org.id} className="p-6">
                       <div className="space-y-4">
-                        <div>
+                        <div className="flex items-center justify-between">
                           <h3 className="text-xl font-semibold text-foreground">{org.name}</h3>
+                          <Dialog
+                            open={addUserDialogOpen[org.id] || false}
+                            onOpenChange={(open) => setAddUserDialogOpen({ ...addUserDialogOpen, [org.id]: open })}
+                          >
+                            <DialogTrigger asChild>
+                              <Button size="sm">
+                                <UserPlus className="h-4 w-4 mr-2" />
+                                Pridať používateľa
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Pridať nového používateľa</DialogTitle>
+                                <DialogDescription>
+                                  Pridajte nového používateľa do organizácie <strong>{org.name}</strong>. Získa prístup
+                                  k tejto organizácii.
+                                </DialogDescription>
+                              </DialogHeader>
+                              <form onSubmit={(e) => handleAddUser(org.id, e)}>
+                                <div className="space-y-4 py-4">
+                                  <div className="space-y-2">
+                                    <Label htmlFor={`email-${org.id}`}>E-mail</Label>
+                                    <Input
+                                      id={`email-${org.id}`}
+                                      type="email"
+                                      placeholder="pouzivatel@priklad.sk"
+                                      value={newUserEmail[org.id] || ""}
+                                      onChange={(e) => setNewUserEmail({ ...newUserEmail, [org.id]: e.target.value })}
+                                      required
+                                    />
+                                  </div>
+                                </div>
+                                <DialogFooter>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setAddUserDialogOpen({ ...addUserDialogOpen, [org.id]: false })}
+                                  >
+                                    Zrušiť
+                                  </Button>
+                                  <Button type="submit" disabled={isUpdating}>
+                                    {isUpdating ? (
+                                      <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Pridávam...
+                                      </>
+                                    ) : (
+                                      "Pridať používateľa"
+                                    )}
+                                  </Button>
+                                </DialogFooter>
+                              </form>
+                            </DialogContent>
+                          </Dialog>
                         </div>
 
                         {org.identifiers && org.identifiers.length > 0 && (
@@ -559,109 +519,6 @@ export function UserProfileManagement() {
               )}
             </CardContent>
           </Card>
-
-          {selectedOrgId && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <Users className="h-5 w-5" />
-                      Používatelia s prístupom k vášmu účtu
-                    </CardTitle>
-                    <CardDescription>Správa používateľov vo vašej organizácii</CardDescription>
-                  </div>
-                  <Dialog open={addUserDialogOpen} onOpenChange={setAddUserDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button>
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        Pridať používateľa
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Pridať nového používateľa</DialogTitle>
-                        <DialogDescription>
-                          Pridajte nového používateľa do vašej organizácie. Získa prístup k účtu.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <form onSubmit={handleAddUser}>
-                        <div className="space-y-4 py-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="email">E-mail</Label>
-                            <Input
-                              id="email"
-                              type="email"
-                              placeholder="pouzivatel@priklad.sk"
-                              value={newUserData.email}
-                              onChange={(e) => setNewUserData({ email: e.target.value })}
-                              required
-                            />
-                          </div>
-                        </div>
-                        <DialogFooter>
-                          <Button type="button" variant="outline" onClick={() => setAddUserDialogOpen(false)}>
-                            Zrušiť
-                          </Button>
-                          <Button type="submit" disabled={isUpdating}>
-                            {isUpdating ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Pridávam...
-                              </>
-                            ) : (
-                              "Pridať používateľa"
-                            )}
-                          </Button>
-                        </DialogFooter>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {loadingUsers ? (
-                  <div className="text-center py-8">
-                    <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">Načítavam používateľov...</p>
-                  </div>
-                ) : orgUsers.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium text-foreground mb-2">Nenašli sa žiadni používatelia</h3>
-                    <p className="text-muted-foreground">Pridajte používateľov, aby mali prístup k tejto organizácii</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {orgUsers.map((user) => (
-                      <Card key={user.id} className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="space-y-1">
-                            <p className="font-medium text-foreground">{user.email}</p>
-                            <div className="flex items-center gap-2">
-                              <Badge variant={user.email_verified ? "default" : "secondary"} className="text-xs">
-                                {user.email_verified ? "Verified" : "Unverified"}
-                              </Badge>
-                            </div>
-                          </div>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => {
-                              setUserToDelete(user)
-                              setDeleteDialogOpen(true)
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
         </TabsContent>
 
         <TabsContent value="security" className="space-y-6">
@@ -790,35 +647,6 @@ export function UserProfileManagement() {
           </Card>
         </TabsContent>
       </Tabs>
-
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Ste si istý?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tým odstránite <strong>{userToDelete?.email}</strong> z vašej organizácie. Túto akciu nie je možné vrátiť
-              späť.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Zrušiť</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteUser}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={isUpdating}
-            >
-              {isUpdating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Odstraňujem...
-                </>
-              ) : (
-                "Odstrániť používateľa"
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   )
 }
