@@ -23,6 +23,8 @@ import {
   Trash2,
   ChevronDown,
   ChevronRight,
+  Building2,
+  Users,
 } from "lucide-react"
 import { AuthService } from "@/lib/auth"
 import { useAppContext } from "@/lib/app-context"
@@ -363,19 +365,21 @@ export function UserProfileManagement() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-foreground">Používateľský profil</h1>
+        <h1 className="text-xl lg:text-3xl font-bold text-foreground">Profil</h1>
         <Button
           variant="outline"
+          size="sm"
           onClick={() => {
             refreshUserData()
             refreshOrganizations()
           }}
           disabled={loading}
+          className="lg:h-10"
         >
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-          Obnoviť
+          <RefreshCw className={`h-4 w-4 lg:mr-2 ${loading ? "animate-spin" : ""}`} />
+          <span className="hidden lg:inline">Obnoviť</span>
         </Button>
       </div>
 
@@ -394,56 +398,50 @@ export function UserProfileManagement() {
       )}
 
       <Tabs defaultValue="organizations" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="organizations">Organizácie</TabsTrigger>
-          <TabsTrigger value="security">Zabezpečenie</TabsTrigger>
-          <TabsTrigger value="tokens">API tokeny</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 h-9 lg:h-10">
+          <TabsTrigger value="organizations" className="text-xs lg:text-sm">
+            <Building2 className="h-3 w-3 lg:h-4 lg:w-4 lg:mr-1" />
+            <span className="hidden sm:inline">Organizácie</span>
+          </TabsTrigger>
+          <TabsTrigger value="security" className="text-xs lg:text-sm">
+            <Shield className="h-3 w-3 lg:h-4 lg:w-4 lg:mr-1" />
+            <span className="hidden sm:inline">Zabezpečenie</span>
+          </TabsTrigger>
+          <TabsTrigger value="tokens" className="text-xs lg:text-sm">
+            <Key className="h-3 w-3 lg:h-4 lg:w-4 lg:mr-1" />
+            <span className="hidden sm:inline">API tokeny</span>
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="organizations" className="space-y-6">
+        <TabsContent value="organizations" className="space-y-3 lg:space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-2xl">
-                <CheckCircle className="h-6 w-6" />
-                Organizácie, ku ktorým máte prístup
+            <CardHeader className="p-4 lg:p-6">
+              <CardTitle className="flex items-center gap-2 text-base lg:text-2xl">
+                <Building2 className="h-4 w-4 lg:h-6 lg:w-6" />
+                <span className="hidden lg:inline">Organizácie, ku ktorým máte prístup</span>
+                <span className="lg:hidden">Moje organizácie</span>
               </CardTitle>
-              <CardDescription className="text-base">
+              <CardDescription className="text-xs lg:text-base hidden lg:block">
                 Zobrazenie detailov organizácií, ku ktorým patríte
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 lg:p-6">
               {loadingOrganizations ? (
-                <div className="space-y-6">
+                <div className="space-y-3 lg:space-y-6">
                   {[1, 2].map((i) => (
-                    <Card key={i} className="border-2">
-                      <CardContent className="p-8">
-                        <div className="space-y-6">
-                          <div className="flex items-start justify-between gap-4">
+                    <Card key={i} className="border">
+                      <CardContent className="p-4 lg:p-8">
+                        <div className="space-y-3 lg:space-y-6">
+                          <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 space-y-2">
-                              <Skeleton className="h-8 w-48" />
-                              <Skeleton className="h-4 w-32" />
+                              <Skeleton className="h-5 lg:h-8 w-32 lg:w-48" />
+                              <Skeleton className="h-3 lg:h-4 w-20 lg:w-32" />
                             </div>
-                            <Skeleton className="h-10 w-40" />
+                            <Skeleton className="h-8 lg:h-10 w-8 lg:w-40" />
                           </div>
-
-                          <div className="border-t pt-6 space-y-4">
-                            <div className="flex items-center gap-2">
-                              <div className="h-8 w-1 bg-primary rounded-full" />
-                              <Skeleton className="h-6 w-24" />
-                            </div>
-                            <Skeleton className="h-16 w-full rounded-lg" />
-                          </div>
-
-                          <div className="border-t pt-6 space-y-4">
-                            <div className="flex items-center gap-2">
-                              <div className="h-8 w-1 bg-primary rounded-full" />
-                              <Skeleton className="h-6 w-32" />
-                            </div>
-                            <div className="space-y-3">
-                              {[1, 2].map((j) => (
-                                <Skeleton key={j} className="h-16 w-full rounded-lg" />
-                              ))}
-                            </div>
+                          <div className="border-t pt-3 lg:pt-6 space-y-2 lg:space-y-4">
+                            <Skeleton className="h-4 lg:h-6 w-20 lg:w-24" />
+                            <Skeleton className="h-12 lg:h-16 w-full rounded-lg" />
                           </div>
                         </div>
                       </CardContent>
@@ -451,36 +449,45 @@ export function UserProfileManagement() {
                   ))}
                 </div>
               ) : detailedOrganizations.length === 0 ? (
-                <div className="text-center py-8">
-                  <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium text-foreground mb-2">Nenašli sa žiadne organizácie</h3>
-                  <p className="text-muted-foreground">Zatiaľ nemáte prístup k žiadnym organizáciám</p>
+                <div className="text-center py-6 lg:py-8">
+                  <AlertCircle className="mx-auto h-8 w-8 lg:h-12 lg:w-12 text-muted-foreground mb-3 lg:mb-4" />
+                  <h3 className="text-sm lg:text-lg font-medium text-foreground mb-1 lg:mb-2">
+                    Nenašli sa žiadne organizácie
+                  </h3>
+                  <p className="text-xs lg:text-base text-muted-foreground">
+                    Zatiaľ nemáte prístup k žiadnym organizáciám
+                  </p>
                 </div>
               ) : (
-                <div className="space-y-6">
+                <div className="space-y-3 lg:space-y-6">
                   {detailedOrganizations.map((org) => (
-                    <Card key={org.id} className="border-2 shadow-sm hover:shadow-md transition-shadow">
-                      <CardContent className="p-8">
-                        <div className="space-y-6">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1">
-                              <h3 className="text-2xl font-bold text-foreground mb-1">{org.name}</h3>
-                              <p className="text-base text-muted-foreground">ID: {org.id}</p>
+                    <Card
+                      key={org.id}
+                      className="border hover:border-primary/50 transition-all shadow-sm hover:shadow-md"
+                    >
+                      <CardContent className="p-4 lg:p-6">
+                        <div className="space-y-3 lg:space-y-4">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-base lg:text-xl font-bold text-foreground mb-0.5 lg:mb-1 truncate">
+                                {org.name}
+                              </h3>
+                              <p className="text-xs lg:text-sm text-muted-foreground">ID: {org.id}</p>
                             </div>
                             <Dialog
                               open={addUserDialogOpen[org.id] || false}
                               onOpenChange={(open) => setAddUserDialogOpen({ ...addUserDialogOpen, [org.id]: open })}
                             >
                               <DialogTrigger asChild>
-                                <Button size="lg" className="font-medium">
-                                  <UserPlus className="h-5 w-5 mr-2" />
-                                  Pridať používateľa
+                                <Button size="sm" className="shrink-0 lg:size-default">
+                                  <UserPlus className="h-4 w-4 lg:mr-2" />
+                                  <span className="hidden lg:inline">Pridať používateľa</span>
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent>
+                              <DialogContent className="max-w-[calc(100vw-2rem)] lg:max-w-lg">
                                 <DialogHeader>
-                                  <DialogTitle>Pridať nového používateľa</DialogTitle>
-                                  <DialogDescription>
+                                  <DialogTitle className="text-base lg:text-lg">Pridať nového používateľa</DialogTitle>
+                                  <DialogDescription className="text-xs lg:text-sm">
                                     Pridajte nového používateľa do organizácie <strong>{org.name}</strong>. Získa
                                     prístup k tejto organizácii.
                                   </DialogDescription>
@@ -488,7 +495,9 @@ export function UserProfileManagement() {
                                 <form onSubmit={(e) => handleAddUser(org.id, e)}>
                                   <div className="space-y-4 py-4">
                                     <div className="space-y-2">
-                                      <Label htmlFor={`email-${org.id}`}>E-mail</Label>
+                                      <Label htmlFor={`email-${org.id}`} className="text-sm">
+                                        E-mail
+                                      </Label>
                                       <Input
                                         id={`email-${org.id}`}
                                         type="email"
@@ -496,18 +505,20 @@ export function UserProfileManagement() {
                                         value={newUserEmail[org.id] || ""}
                                         onChange={(e) => setNewUserEmail({ ...newUserEmail, [org.id]: e.target.value })}
                                         required
+                                        className="text-sm"
                                       />
                                     </div>
                                   </div>
-                                  <DialogFooter>
+                                  <DialogFooter className="flex-col sm:flex-row gap-2">
                                     <Button
                                       type="button"
                                       variant="outline"
                                       onClick={() => setAddUserDialogOpen({ ...addUserDialogOpen, [org.id]: false })}
+                                      className="w-full sm:w-auto text-sm"
                                     >
                                       Zrušiť
                                     </Button>
-                                    <Button type="submit" disabled={isUpdating}>
+                                    <Button type="submit" disabled={isUpdating} className="w-full sm:w-auto text-sm">
                                       {isUpdating ? (
                                         <>
                                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -524,12 +535,12 @@ export function UserProfileManagement() {
                           </div>
 
                           {org.identifiers && org.identifiers.length > 0 && (
-                            <div className="border-t pt-6">
-                              <div className="flex items-center gap-2 mb-4">
-                                <div className="h-8 w-1 bg-primary rounded-full" />
-                                <h4 className="text-lg font-semibold text-foreground">Peppol ID</h4>
+                            <div className="border-t pt-3 lg:pt-4">
+                              <div className="flex items-center gap-1.5 lg:gap-2 mb-2 lg:mb-3">
+                                <div className="h-6 lg:h-8 w-0.5 lg:w-1 bg-primary rounded-full" />
+                                <h4 className="text-sm lg:text-base font-semibold text-foreground">Peppol ID</h4>
                               </div>
-                              <div className="space-y-3">
+                              <div className="space-y-2">
                                 {org.identifiers.map((identifier) => {
                                   const parseIdentifier = (fullIdentifier: string) => {
                                     const parts = fullIdentifier.split(":")
@@ -541,9 +552,9 @@ export function UserProfileManagement() {
                                   return (
                                     <div
                                       key={identifier.id}
-                                      className="p-4 bg-primary/5 border border-primary/20 rounded-lg"
+                                      className="p-2 lg:p-3 bg-primary/5 border border-primary/20 rounded-lg"
                                     >
-                                      <p className="font-mono text-lg font-medium text-foreground">
+                                      <p className="font-mono text-sm lg:text-base font-medium text-foreground break-all">
                                         {parsedIdentifier}
                                       </p>
                                     </div>
@@ -553,57 +564,65 @@ export function UserProfileManagement() {
                             </div>
                           )}
 
-                          <div className="border-t pt-6">
+                          <div className="border-t pt-3 lg:pt-4">
                             <button
                               onClick={() => toggleOrgExpansion(org.id)}
-                              className="flex items-center gap-2 mb-4 w-full hover:opacity-80 transition-opacity"
+                              className="flex items-center gap-1.5 lg:gap-2 w-full hover:opacity-70 transition-opacity"
                             >
-                              <div className="h-8 w-1 bg-primary rounded-full" />
-                              <h4 className="text-lg font-semibold text-foreground">Používatelia</h4>
+                              <div className="h-6 lg:h-8 w-0.5 lg:w-1 bg-primary rounded-full" />
+                              <Users className="h-4 w-4 text-muted-foreground" />
+                              <h4 className="text-sm lg:text-base font-semibold text-foreground">Používatelia</h4>
+                              <span className="text-xs lg:text-sm text-muted-foreground ml-1">
+                                ({organizationUsers[org.id]?.length || 0})
+                              </span>
                               {expandedOrgs[org.id] ? (
-                                <ChevronDown className="h-5 w-5 ml-auto text-muted-foreground" />
+                                <ChevronDown className="h-4 w-4 lg:h-5 lg:w-5 ml-auto text-muted-foreground" />
                               ) : (
-                                <ChevronRight className="h-5 w-5 ml-auto text-muted-foreground" />
+                                <ChevronRight className="h-4 w-4 lg:h-5 lg:w-5 ml-auto text-muted-foreground" />
                               )}
                             </button>
 
                             {expandedOrgs[org.id] && (
-                              <>
+                              <div className="mt-2 lg:mt-3">
                                 {loadingUsers[org.id] ? (
-                                  <div className="space-y-3">
-                                    {[1, 2, 3].map((i) => (
+                                  <div className="space-y-2">
+                                    {[1, 2].map((i) => (
                                       <div
                                         key={i}
-                                        className="flex items-center gap-3 p-4 bg-muted/50 border border-muted rounded-lg"
+                                        className="flex items-center gap-2 lg:gap-3 p-2 lg:p-3 bg-muted/50 border border-muted rounded-lg"
                                       >
-                                        <Skeleton className="h-10 w-10 rounded-full" />
-                                        <div className="flex-1 space-y-2">
-                                          <Skeleton className="h-4 w-48" />
-                                          <Skeleton className="h-3 w-24" />
+                                        <Skeleton className="h-8 w-8 lg:h-10 lg:w-10 rounded-full shrink-0" />
+                                        <div className="flex-1 space-y-1 lg:space-y-2">
+                                          <Skeleton className="h-3 lg:h-4 w-32 lg:w-48" />
+                                          <Skeleton className="h-2 lg:h-3 w-16 lg:w-24" />
                                         </div>
-                                        <Skeleton className="h-8 w-8 rounded" />
+                                        <Skeleton className="h-6 w-6 lg:h-8 lg:w-8 rounded shrink-0" />
                                       </div>
                                     ))}
                                   </div>
                                 ) : organizationUsers[org.id] && organizationUsers[org.id].length > 0 ? (
-                                  <div className="space-y-3">
+                                  <div className="space-y-2">
                                     {organizationUsers[org.id].map((user) => (
                                       <div
                                         key={user.id}
-                                        className="flex items-center justify-between p-4 bg-muted/50 border border-muted rounded-lg hover:bg-muted/70 transition-colors"
+                                        className="flex items-center justify-between gap-2 p-2 lg:p-3 bg-muted/50 border border-muted rounded-lg hover:bg-muted/70 transition-colors"
                                       >
-                                        <div className="flex items-center gap-3">
-                                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                            <span className="text-primary font-semibold text-base">
+                                        <div className="flex items-center gap-2 lg:gap-3 min-w-0 flex-1">
+                                          <div className="h-8 w-8 lg:h-10 lg:w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                            <span className="text-primary font-semibold text-xs lg:text-base">
                                               {user.email.charAt(0).toUpperCase()}
                                             </span>
                                           </div>
-                                          <div>
-                                            <p className="text-base font-medium text-foreground">{user.email}</p>
+                                          <div className="min-w-0 flex-1">
+                                            <p className="text-xs lg:text-sm font-medium text-foreground truncate">
+                                              {user.email}
+                                            </p>
                                             {user.email_verified && (
                                               <div className="flex items-center gap-1 mt-0.5">
-                                                <CheckCircle className="h-3.5 w-3.5 text-green-600" />
-                                                <span className="text-xs text-green-600 font-medium">Overený</span>
+                                                <CheckCircle className="h-3 w-3 text-green-600 shrink-0" />
+                                                <span className="text-[10px] lg:text-xs text-green-600 font-medium">
+                                                  Overený
+                                                </span>
                                               </div>
                                             )}
                                           </div>
@@ -613,19 +632,19 @@ export function UserProfileManagement() {
                                           size="sm"
                                           onClick={() => handleRemoveUser(org.id, user.id, user.email)}
                                           disabled={isUpdating}
-                                          className="hover:bg-destructive/10"
+                                          className="hover:bg-destructive/10 h-8 w-8 lg:h-9 lg:w-9 p-0 shrink-0"
                                         >
-                                          <Trash2 className="h-4 w-4 text-destructive" />
+                                          <Trash2 className="h-3.5 w-3.5 lg:h-4 lg:w-4 text-destructive" />
                                         </Button>
                                       </div>
                                     ))}
                                   </div>
                                 ) : (
-                                  <div className="text-center py-6 px-4 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/30">
-                                    <p className="text-base text-muted-foreground">Žiadni používatelia</p>
+                                  <div className="text-center py-4 lg:py-6 px-3 lg:px-4 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/30">
+                                    <p className="text-xs lg:text-sm text-muted-foreground">Žiadni používatelia</p>
                                   </div>
                                 )}
-                              </>
+                              </div>
                             )}
                           </div>
                         </div>
