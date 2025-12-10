@@ -192,64 +192,74 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="w-full border-2 shadow-xl">
-      <CardHeader className="space-y-3 pb-8 pt-8">
-        <CardTitle className="text-3xl md:text-4xl font-bold text-center bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+    <Card className="w-full border shadow-modern-lg backdrop-blur-sm">
+      <CardHeader className="space-y-3 pb-8 pt-10">
+        <CardTitle className="text-4xl md:text-5xl font-bold text-center bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
           Demo digitálny poštár
         </CardTitle>
-        <CardDescription className="text-center text-base md:text-lg">Demo digitálny poštár faktúr</CardDescription>
+        <CardDescription className="text-center text-base md:text-lg text-muted-foreground">
+          Demo digitálny poštár faktúr
+        </CardDescription>
       </CardHeader>
-      <CardContent className="px-6 pb-8 md:px-8">
+      <CardContent className="px-6 pb-10 md:px-10">
         <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 h-12 mb-6">
-            <TabsTrigger value="login" className="text-base md:text-lg">
+          <TabsList className="grid w-full grid-cols-2 h-14 mb-8 bg-muted/50">
+            <TabsTrigger
+              value="login"
+              className="text-base md:text-lg font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
               Prihlásenie
             </TabsTrigger>
-            <TabsTrigger value="register" className="text-base md:text-lg">
+            <TabsTrigger
+              value="register"
+              className="text-base md:text-lg font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
               Registrácia
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="login" className="space-y-6 mt-6">
-            <Alert className="border-2 border-primary/30 bg-primary/5 shadow-sm">
+            <Alert className="border-2 border-blue-200/50 bg-blue-50/50 shadow-sm">
               <AlertDescription>
-                <div className="font-semibold text-base mb-3">Demo prihlasovacie údaje:</div>
+                <div className="font-semibold text-base mb-4 text-blue-900">Demo prihlasovacie údaje:</div>
                 <div className="space-y-3">
-                  <div className="flex items-start justify-between gap-3 p-3 bg-background rounded-lg border">
+                  <div className="flex items-start justify-between gap-3 p-4 bg-white rounded-xl border border-blue-100 shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs text-muted-foreground mb-1">E-mail</div>
-                      <div className="font-mono text-sm md:text-base break-all">jankouctovnik@gmail.com</div>
+                      <div className="text-xs font-medium text-blue-600 mb-1.5">E-mail</div>
+                      <div className="font-mono text-sm md:text-base text-slate-700 break-all">
+                        jankouctovnik@gmail.com
+                      </div>
                     </div>
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="h-9 w-9 shrink-0 hover:bg-primary/10"
+                      className="h-10 w-10 shrink-0 hover:bg-blue-100 rounded-lg"
                       onClick={() => handleCopy("jankouctovnik@gmail.com", "email")}
                     >
                       {copiedField === "email" ? (
                         <Check className="h-4 w-4 text-green-600" />
                       ) : (
-                        <Copy className="h-4 w-4" />
+                        <Copy className="h-4 w-4 text-blue-600" />
                       )}
                     </Button>
                   </div>
-                  <div className="flex items-start justify-between gap-3 p-3 bg-background rounded-lg border">
+                  <div className="flex items-start justify-between gap-3 p-4 bg-white rounded-xl border border-blue-100 shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs text-muted-foreground mb-1">Heslo</div>
-                      <div className="font-mono text-sm md:text-base">.Nbu123?</div>
+                      <div className="text-xs font-medium text-blue-600 mb-1.5">Heslo</div>
+                      <div className="font-mono text-sm md:text-base text-slate-700">.Nbu123?</div>
                     </div>
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="h-9 w-9 shrink-0 hover:bg-primary/10"
+                      className="h-10 w-10 shrink-0 hover:bg-blue-100 rounded-lg"
                       onClick={() => handleCopy(".Nbu123?", "password")}
                     >
                       {copiedField === "password" ? (
                         <Check className="h-4 w-4 text-green-600" />
                       ) : (
-                        <Copy className="h-4 w-4" />
+                        <Copy className="h-4 w-4 text-blue-600" />
                       )}
                     </Button>
                   </div>
@@ -257,18 +267,18 @@ export function LoginForm() {
               </AlertDescription>
             </Alert>
 
-            <form onSubmit={handleLogin} className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-base font-medium">
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div className="space-y-2.5">
+                <Label htmlFor="email" className="text-base font-semibold text-slate-700">
                   E-mail
                 </Label>
                 <div className="relative">
-                  <Mail className="absolute left-4 top-4 h-5 w-5 text-muted-foreground" />
+                  <Mail className="absolute left-4 top-4 h-5 w-5 text-slate-400" />
                   <Input
                     id="email"
                     type="email"
                     placeholder="Zadajte váš e-mail"
-                    className="pl-12 h-14 text-base"
+                    className="pl-12 h-14 text-base border-2 focus:border-primary rounded-xl shadow-sm"
                     value={loginData.email}
                     onChange={(e) => setLoginData((prev) => ({ ...prev, email: e.target.value }))}
                     required
@@ -276,17 +286,17 @@ export function LoginForm() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-base font-medium">
+              <div className="space-y-2.5">
+                <Label htmlFor="password" className="text-base font-semibold text-slate-700">
                   Heslo
                 </Label>
                 <div className="relative">
-                  <Lock className="absolute left-4 top-4 h-5 w-5 text-muted-foreground" />
+                  <Lock className="absolute left-4 top-4 h-5 w-5 text-slate-400" />
                   <Input
                     id="password"
                     type="password"
                     placeholder="Zadajte vaše heslo"
-                    className="pl-12 h-14 text-base"
+                    className="pl-12 h-14 text-base border-2 focus:border-primary rounded-xl shadow-sm"
                     value={loginData.password}
                     onChange={(e) => setLoginData((prev) => ({ ...prev, password: e.target.value }))}
                     required
@@ -295,12 +305,16 @@ export function LoginForm() {
               </div>
 
               {error && (
-                <Alert variant="destructive" className="border-2">
+                <Alert variant="destructive" className="border-2 rounded-xl">
                   <AlertDescription className="text-sm md:text-base">{error}</AlertDescription>
                 </Alert>
               )}
 
-              <Button type="submit" className="w-full h-14 text-base md:text-lg font-semibold" disabled={isLoading}>
+              <Button
+                type="submit"
+                className="w-full h-14 text-base md:text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+                disabled={isLoading}
+              >
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -312,12 +326,12 @@ export function LoginForm() {
               </Button>
             </form>
 
-            <div className="mt-6 pt-6 border-t">
+            <div className="mt-8 pt-6 border-t border-slate-200">
               <a
                 href="https://github.com/spavlovic77/demopostar"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors group"
+                className="flex items-center justify-center gap-2 text-sm text-slate-600 hover:text-blue-600 transition-colors group"
               >
                 <Github className="h-5 w-5 group-hover:scale-110 transition-transform" />
                 <span className="font-medium">Zobraziť na GitHub</span>
@@ -326,14 +340,14 @@ export function LoginForm() {
           </TabsContent>
 
           <TabsContent value="register" className="space-y-6 mt-6">
-            <form onSubmit={handleRegistration} className="space-y-5">
-              <div className="space-y-2">
-                <Label className="text-base font-medium">Názov organizácie</Label>
+            <form onSubmit={handleRegistration} className="space-y-6">
+              <div className="space-y-2.5">
+                <Label className="text-base font-semibold text-slate-700">Názov organizácie</Label>
                 <div className="relative">
-                  <Building className="absolute left-4 top-4 h-5 w-5 text-muted-foreground" />
+                  <Building className="absolute left-4 top-4 h-5 w-5 text-slate-400" />
                   <Input
                     placeholder="Zadajte názov organizácie *"
-                    className="pl-12 h-14 text-base"
+                    className="pl-12 h-14 text-base border-2 focus:border-primary rounded-xl shadow-sm"
                     value={registrationData.organizationName}
                     onChange={(e) => setRegistrationData((prev) => ({ ...prev, organizationName: e.target.value }))}
                     required
@@ -341,11 +355,11 @@ export function LoginForm() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-base font-medium">Peppol identifikátor (DIČO)</Label>
+              <div className="space-y-2.5">
+                <Label className="text-base font-semibold text-slate-700">Peppol identifikátor (DIČO)</Label>
                 <Input
                   placeholder="Presne 10 číslic *"
-                  className="h-14 text-base font-mono"
+                  className="h-14 text-base font-mono border-2 focus:border-primary rounded-xl shadow-sm"
                   value={registrationData.identifier}
                   onChange={(e) => {
                     const value = e.target.value.replace(/\D/g, "").slice(0, 10)
@@ -362,14 +376,14 @@ export function LoginForm() {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-base font-medium">E-mail</Label>
+              <div className="space-y-2.5">
+                <Label className="text-base font-semibold text-slate-700">E-mail</Label>
                 <div className="relative">
-                  <Mail className="absolute left-4 top-4 h-5 w-5 text-muted-foreground" />
+                  <Mail className="absolute left-4 top-4 h-5 w-5 text-slate-400" />
                   <Input
                     type="email"
                     placeholder="Zadajte e-mailovú adresu *"
-                    className="pl-12 h-14 text-base"
+                    className="pl-12 h-14 text-base border-2 focus:border-primary rounded-xl shadow-sm"
                     value={registrationData.email}
                     onChange={(e) => setRegistrationData((prev) => ({ ...prev, email: e.target.value }))}
                     required
@@ -378,18 +392,22 @@ export function LoginForm() {
               </div>
 
               {error && (
-                <Alert variant="destructive" className="border-2">
+                <Alert variant="destructive" className="border-2 rounded-xl">
                   <AlertDescription className="text-sm md:text-base">{error}</AlertDescription>
                 </Alert>
               )}
 
               {success && (
-                <Alert className="border-2 border-accent bg-accent/10">
-                  <AlertDescription className="text-sm md:text-base">{success}</AlertDescription>
+                <Alert className="border-2 border-green-200 bg-green-50 rounded-xl">
+                  <AlertDescription className="text-sm md:text-base text-green-800">{success}</AlertDescription>
                 </Alert>
               )}
 
-              <Button type="submit" className="w-full h-14 text-base md:text-lg font-semibold" disabled={isLoading}>
+              <Button
+                type="submit"
+                className="w-full h-14 text-base md:text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+                disabled={isLoading}
+              >
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />

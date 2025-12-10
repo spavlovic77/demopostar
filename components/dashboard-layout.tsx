@@ -115,29 +115,29 @@ export function DashboardLayout() {
 
   if (isLoading || !userData) {
     return (
-      <div className="min-h-screen bg-background flex">
-        <div className="hidden lg:block fixed inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-sidebar-border">
-          <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
+      <div className="min-h-screen bg-slate-50 flex">
+        <div className="hidden lg:block fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 border-r border-slate-800">
+          <div className="flex items-center justify-between p-4 border-b border-slate-800">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <FileText className="h-4 w-4 text-primary-foreground" />
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center shadow-lg">
+                <FileText className="h-4 w-4 text-white" />
               </div>
-              <span className="font-bold text-sidebar-foreground">Demo poštár faktúr</span>
+              <span className="font-bold text-white">Demo poštár faktúr</span>
             </div>
           </div>
 
           <nav className="p-4 space-y-2">
             {[1, 2, 3, 4, 5].map((i) => (
-              <Skeleton key={i} className="h-12 w-full rounded-lg" />
+              <Skeleton key={i} className="h-12 w-full rounded-lg bg-slate-800" />
             ))}
           </nav>
 
           <div className="absolute bottom-4 left-4 right-4">
-            <div className="flex items-center gap-3 p-3 bg-sidebar-primary rounded-lg">
+            <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-xl">
               <Skeleton className="h-8 w-8 rounded-full" />
               <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-4 w-24 bg-slate-700" />
+                <Skeleton className="h-3 w-32 bg-slate-700" />
               </div>
             </div>
           </div>
@@ -169,10 +169,10 @@ export function DashboardLayout() {
               <Skeleton className="h-10 w-64" />
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-32 rounded-lg" />
+                  <Skeleton key={i} className="h-32 rounded-xl" />
                 ))}
               </div>
-              <Skeleton className="h-96 rounded-lg" />
+              <Skeleton className="h-96 rounded-xl" />
             </div>
           </main>
         </div>
@@ -181,26 +181,34 @@ export function DashboardLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-slate-50 flex">
       {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-sm"
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
 
       <div
         className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-sidebar-border transform transition-transform duration-200 ease-in-out
+        fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 border-r border-slate-800 transform transition-transform duration-200 ease-in-out
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0 lg:relative lg:flex lg:flex-col
       `}
       >
-        <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
+        <div className="flex items-center justify-between p-4 border-b border-slate-800">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <FileText className="h-4 w-4 text-primary-foreground" />
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center shadow-lg">
+              <FileText className="h-4 w-4 text-white" />
             </div>
-            <span className="font-bold text-sidebar-foreground">Demo poštár faktúr</span>
+            <span className="font-bold text-white">Demo poštár faktúr</span>
           </div>
-          <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="lg:hidden text-white hover:bg-slate-800"
+            onClick={() => setSidebarOpen(false)}
+          >
             <X className="h-5 w-5" />
           </Button>
         </div>
@@ -217,15 +225,15 @@ export function DashboardLayout() {
                   setSidebarOpen(false)
                 }}
                 className={`
-                  w-full flex items-center justify-between p-3 rounded-lg text-left transition-all duration-200 ease-in-out
+                  w-full flex items-center justify-between p-3 rounded-xl text-left transition-all duration-200 ease-in-out
                   ${
                     activeSection === item.id && selectedOrganizationIdentifier === null
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm scale-[1.02]"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground hover:scale-[1.01] hover:shadow-sm"
+                      ? "bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg scale-[1.02]"
+                      : "text-slate-300 hover:bg-slate-800 hover:text-white hover:scale-[1.01]"
                   }
                   ${
                     item.id === "wallet" && walletBalance && walletBalance.available < 0.04
-                      ? "border-2 border-orange-400 bg-orange-50 text-orange-800 hover:bg-orange-100"
+                      ? "border-2 border-orange-400 bg-orange-500/20 text-orange-300 hover:bg-orange-500/30"
                       : ""
                   }
                 `}
@@ -234,30 +242,24 @@ export function DashboardLayout() {
                   <item.icon
                     className={`h-5 w-5 transition-transform duration-200 ${
                       activeSection === item.id ? "scale-110" : ""
-                    } ${item.id === "wallet" && walletBalance && walletBalance.available < 0.04 ? "text-orange-600" : ""}`}
+                    } ${item.id === "wallet" && walletBalance && walletBalance.available < 0.04 ? "text-orange-400" : ""}`}
                   />
                   <span className="font-medium">{item.label}</span>
                 </div>
                 {item.id === "wallet" && (
                   <div
-                    className={`text-xs font-medium px-2 py-1 rounded-full ${
+                    className={`text-xs font-medium px-2.5 py-1 rounded-full ${
                       walletBalance && walletBalance.available < 0.04
-                        ? "bg-orange-200 text-orange-800"
-                        : "bg-sidebar-accent/20"
+                        ? "bg-orange-400/20 text-orange-300"
+                        : "bg-white/10 text-white"
                     }`}
                   >
                     {walletLoading ? (
-                      <div className="animate-pulse text-sidebar-foreground/50">Loading...</div>
+                      <div className="animate-pulse">Loading...</div>
                     ) : walletBalance?.available !== undefined ? (
-                      <span
-                        className={
-                          walletBalance.available < 0.04 ? "text-orange-800" : "text-sidebar-accent-foreground"
-                        }
-                      >
-                        €{walletBalance.available.toFixed(2)}
-                      </span>
+                      <span>€{walletBalance.available.toFixed(2)}</span>
                     ) : (
-                      <span className="text-sidebar-foreground/50">€0.00</span>
+                      <span>€0.00</span>
                     )}
                   </div>
                 )}
@@ -267,7 +269,7 @@ export function DashboardLayout() {
                 <div className="mt-2 ml-4 space-y-1">
                   <button
                     onClick={() => setFoldersExpanded(!foldersExpanded)}
-                    className="flex items-center gap-2 text-xs text-sidebar-foreground/70 hover:text-sidebar-foreground transition-colors py-1"
+                    className="flex items-center gap-2 text-xs text-slate-400 hover:text-slate-200 transition-colors py-1"
                   >
                     {foldersExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
                     <Building2 className="h-3 w-3" />
@@ -287,11 +289,11 @@ export function DashboardLayout() {
                             key={org.id}
                             onClick={() => handleOrganizationClick(peppolIdentifier)}
                             className={`
-                            w-full text-left px-3 py-2 rounded-md text-sm transition-all duration-200
+                            w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200
                             ${
                               selectedOrganizationIdentifier === peppolIdentifier
-                                ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                                : "text-sidebar-foreground/80 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground"
+                                ? "bg-blue-600 text-white font-medium shadow-sm"
+                                : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
                             }
                           `}
                             title={org.name}
@@ -307,7 +309,7 @@ export function DashboardLayout() {
 
               {index === 0 && (
                 <div className="my-3">
-                  <div className="h-px bg-sidebar-border" />
+                  <div className="h-px bg-slate-800" />
                 </div>
               )}
             </div>
@@ -315,23 +317,23 @@ export function DashboardLayout() {
         </nav>
 
         <div className="absolute bottom-4 left-4 right-4">
-          <div className="flex items-center gap-3 p-3 bg-sidebar-primary rounded-lg">
-            <Avatar className="h-8 w-8">
+          <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-xl border border-slate-700 shadow-lg">
+            <Avatar className="h-8 w-8 ring-2 ring-blue-500">
               <AvatarFallback>
                 <AvatarInitials name={`${userData.first_name} ${userData.last_name}`} />
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-sidebar-primary-foreground truncate">
+              <p className="text-sm font-medium text-white truncate">
                 {userData.first_name} {userData.last_name}
               </p>
-              <p className="text-xs text-sidebar-primary-foreground/70 truncate">{userData.email}</p>
+              <p className="text-xs text-slate-400 truncate">{userData.email}</p>
             </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={handleLogout}
-              className="text-sidebar-primary-foreground hover:bg-sidebar-primary-foreground/10"
+              className="text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg"
             >
               <LogOut className="h-5 w-5" />
             </Button>
@@ -340,15 +342,15 @@ export function DashboardLayout() {
       </div>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="lg:hidden flex items-center justify-between p-4 border-b border-border bg-card">
+        <div className="lg:hidden flex items-center justify-between p-4 border-b border-slate-200 bg-white shadow-sm">
           <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)}>
             <Menu className="h-5 w-5" />
           </Button>
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
-              <FileText className="h-3 w-3 text-primary-foreground" />
+            <div className="w-6 h-6 bg-gradient-to-br from-blue-600 to-cyan-600 rounded flex items-center justify-center">
+              <FileText className="h-3 w-3 text-white" />
             </div>
-            <span className="font-bold text-foreground">Demo poštár</span>
+            <span className="font-bold text-slate-900">Demo poštár</span>
           </div>
           <div className="w-8" />
         </div>
